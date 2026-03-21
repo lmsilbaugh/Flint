@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flint — Private Voice & Chat</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<style>
+/* ── COLOR SYSTEM ──────────────────────────────────────────────────────────
+   Base: warm dark slate (not pure black — easier on eyes)
+   Accent: soft teal/cyan (readable, not neon)
+   Text: warm off-white with good contrast ratios
+   ──────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Backgrounds — warm dark slate, layered */
+  --bg:    #13161a;   /* main background */
+  --bg1:   #1a1e24;   /* sidebar */
+  --bg2:   #1f242c;   /* panels, cards */
+  --bg3:   #262c36;   /* inputs, hover states */
+  --bg4:   #2e3540;   /* active/selected */
+
+  /* Borders */
+  --bd:    rgba(255,255,255,.07);
+  --bd2:   rgba(255,255,255,.12);
+  --bd3:   rgba(100,180,220,.2);
+
+  /* Accent — soft teal */
+  --ac:    #5bb8d4;   /* primary accent */
+  --ac2:   #3a9dbd;   /* darker accent */
+  --acd:   rgba(91,184,212,.1);
+  --acg:   rgba(91,184,212,.18);
+
+  /* Text — warm off-white, good contrast */
+  --tx:    #dde4ed;   /* primary text */
+  --tx2:   #8896a8;   /* secondary text */
+  --tx3:   #4d5e72;   /* tertiary/muted */
+
+  /* Semantic */
+  --green: #4caf82;   /* success/online */
+  --red:   #e05c6e;   /* danger/end call */
+  --amber: #e0a84c;   /* warning */
+
+  /* Type */
+  --sans: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --r: 8px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); font-family: var(--sans); color: var(--tx); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+::selection { background: var(--acd); }
+
+.screen { position: fixed; inset: 0; display: none; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* ── BOOT ──────────────────────────────────────────────────────────────── */
+#boot { align-items: center; justify-content: center; background: var(--bg); }
+#boot-inner { width: 560px; max-width: 92vw; }
+#boot-logo { font-family: var(--mono); font-size: 9px; color: var(--ac2); line-height: 1.25; white-space: pre; margin-bottom: 16px; opacity: .8; }
+.bl { font-family: var(--mono); font-size: 12px; line-height: 1.9; opacity: 0; animation: fadein .04s forwards; }
+.bl.d { color: var(--tx3); }
+.bl.b { color: var(--tx); font-weight: 600; }
+.bl.w { color: var(--amber); }
+@keyframes fadein { to { opacity: 1; } }
+#boot-btn { display: none; margin-top: 16px; }
+.ghost-btn { background: var(--acd); border: 1px solid var(--bd3); color: var(--ac); border-radius: var(--r); padding: 10px 24px; font-family: var(--mono); font-size: 12px; cursor: pointer; transition: all .2s; letter-spacing: .05em; }
+.ghost-btn:hover { background: var(--acg); border-color: var(--ac); }
+
+/* ── SETUP ─────────────────────────────────────────────────────────────── */
+#setup { align-items: center; justify-content: center; background: var(--bg); }
+.setup-wrap { width: 400px; max-width: 92vw; }
+.setup-wrap h1 { font-size: 26px; font-weight: 700; color: var(--tx); margin-bottom: 6px; letter-spacing: -.3px; }
+.setup-wrap p { font-size: 14px; color: var(--tx2); margin-bottom: 28px; line-height: 1.6; }
+.field-label { font-family: var(--mono); font-size: 11px; color: var(--tx3); margin-bottom: 6px; letter-spacing: .05em; text-transform: uppercase; }
+.text-inp { width: 100%; background: var(--bg2); border: 1px solid var(--bd2); border-radius: var(--r); padding: 12px 14px; color: var(--tx); font-family: var(--sans); font-size: 15px; outline: none; margin-bottom: 16px; transition: border .2s, box-shadow .2s; }
+.text-inp:focus { border-color: var(--ac); box-shadow: 0 0 0 3px var(--acd); }
+.text-inp::placeholder { color: var(--tx3); }
+.primary-btn { width: 100%; background: var(--ac); color: #0d1117; border: none; border-radius: var(--r); padding: 13px; font-family: var(--sans); font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s; letter-spacing: .02em; }
+.primary-btn:hover { background: #72c8e0; box-shadow: 0 4px 20px rgba(91,184,212,.3); }
+
+/* ── APP LAYOUT ────────────────────────────────────────────────────────── */
+#app { flex-direction: row; }
+
+/* ── SIDEBAR ───────────────────────────────────────────────────────────── */
+.sidebar { width: 248px; flex-shrink: 0; background: var(--bg1); border-right: 1px solid var(--bd); display: flex; flex-direction: column; height: 100%; }
+.sb-head { padding: 14px 12px 10px; border-bottom: 1px solid var(--bd); }
+.sb-brand { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.sb-logo { width: 26px; height: 26px; flex-shrink: 0; }
+.sb-name { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--ac); flex: 1; }
+.add-btn { width: 26px; height: 26px; border-radius: 6px; background: var(--acd); border: 1px solid var(--bd3); color: var(--ac); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; line-height: 1; flex-shrink: 0; }
+.add-btn:hover { background: var(--acg); }
+.sb-search { display: flex; align-items: center; gap: 6px; background: var(--bg3); border: 1px solid var(--bd); border-radius: var(--r); padding: 6px 10px; }
+.sb-search input { background: none; border: none; outline: none; color: var(--tx); font-family: var(--sans); font-size: 13px; flex: 1; }
+.sb-search input::placeholder { color: var(--tx3); }
+.net-bar { padding: 5px 12px; border-bottom: 1px solid var(--bd); display: flex; align-items: center; gap: 6px; }
+.net-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2.5s infinite; flex-shrink: 0; }
+.net-dot.off { background: var(--tx3); animation: none; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+.net-label { font-family: var(--mono); font-size: 10px; color: var(--tx3); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ct-list { flex: 1; overflow-y: auto; padding: 6px; }
+.sec-lbl { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; color: var(--tx3); padding: 6px 6px 3px; text-transform: uppercase; }
+.ct { display: flex; align-items: center; gap: 8px; padding: 8px 8px; border-radius: var(--r); cursor: pointer; transition: background .1s; margin-bottom: 2px; }
+.ct:hover { background: var(--bg3); }
+.ct.sel { background: var(--acd); border: 1px solid var(--bd3); }
+.ct-av { width: 34px; height: 34px; border-radius: 50%; background: var(--bg3); border: 1px solid var(--bd); display: flex; align-items: center; justify-content: center; font-size: 17px; position: relative; flex-shrink: 0; }
+.ct-status { position: absolute; bottom: 0; right: 0; width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--bg1); background: var(--tx3); }
+.ct-status.on { background: var(--green); }
+.ct-info { flex: 1; min-width: 0; }
+.ct-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--tx); }
+.ct-sub { font-size: 10px; color: var(--tx3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--mono); margin-top: 1px; }
+.unread-badge { background: var(--ac); color: #0d1117; font-family: var(--mono); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; flex-shrink: 0; }
+.sb-foot { padding: 10px 12px; border-top: 1px solid var(--bd); display: flex; align-items: center; gap: 8px; }
+.my-av { width: 30px; height: 30px; border-radius: 50%; background: var(--acd); border: 1px solid var(--bd3); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.my-info { flex: 1; min-width: 0; }
+.my-name { font-size: 13px; font-weight: 500; color: var(--tx); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.my-id { font-family: var(--mono); font-size: 10px; color: var(--tx3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.icon-btn { width: 26px; height: 26px; border-radius: 6px; background: none; border: none; cursor: pointer; color: var(--tx2); font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all .12s; }
+.icon-btn:hover { background: var(--bg3); color: var(--tx); }
+
+/* ── CHAT PANE ─────────────────────────────────────────────────────────── */
+.chat-pane { flex: 1; display: flex; flex-direction: column; height: 100%; min-width: 0; background: var(--bg); }
+.empty-state { flex: 1; overflow-y: auto; padding: 28px; display: flex; flex-direction: column; align-items: center; }
+.empty-inner { width: 100%; max-width: 440px; }
+.step-card { background: var(--bg2); border: 1px solid var(--bd2); border-radius: 10px; padding: 18px 20px; margin-bottom: 10px; }
+.step-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.step-num { width: 26px; height: 26px; border-radius: 50%; background: var(--ac); color: #0d1117; font-family: var(--mono); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.step-num.muted { background: var(--bg4); border: 1px solid var(--bd2); color: var(--tx2); }
+.step-title { font-size: 14px; font-weight: 600; color: var(--tx); }
+.step-body { font-size: 13px; color: var(--tx2); line-height: 1.7; }
+.step-btn { background: var(--ac); color: #0d1117; border: none; border-radius: var(--r); padding: 10px; font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 10px; letter-spacing: .02em; transition: all .15s; }
+.step-btn:hover { background: #72c8e0; }
+.info-callout { background: var(--acd); border: 1px solid var(--bd3); border-radius: 10px; padding: 12px 16px; margin-top: 4px; }
+.conv-header { padding: 12px 18px; border-bottom: 1px solid var(--bd); display: flex; align-items: center; gap: 10px; flex-shrink: 0; background: var(--bg1); }
+.conv-av { width: 34px; height: 34px; border-radius: 50%; font-size: 17px; display: flex; align-items: center; justify-content: center; background: var(--bg3); border: 1px solid var(--bd); flex-shrink: 0; }
+.conv-name { font-size: 14px; font-weight: 600; color: var(--tx); }
+.conv-id { font-family: var(--mono); font-size: 10px; color: var(--tx3); margin-top: 1px; }
+.call-btn { display: flex; align-items: center; gap: 5px; padding: 7px 13px; border-radius: var(--r); font-family: var(--mono); font-size: 11px; cursor: pointer; border: 1px solid var(--bd3); background: var(--acd); color: var(--ac); transition: all .15s; letter-spacing: .04em; }
+.call-btn:hover { background: var(--acg); }
+.msgs-area { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; }
+.sys-msg { text-align: center; font-family: var(--mono); font-size: 10px; color: var(--tx3); padding: 4px 0; margin-bottom: 8px; }
+.msg-group { margin-bottom: 12px; }
+.msg-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.msg-av { width: 20px; height: 20px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+.msg-name { font-size: 12px; font-weight: 500; color: var(--tx2); }
+.msg-time { font-family: var(--mono); font-size: 10px; color: var(--tx3); }
+.msg-row { display: flex; margin-bottom: 3px; }
+.msg-row.me { justify-content: flex-end; }
+.bubble { background: var(--bg2); border: 1px solid var(--bd); border-radius: 3px 10px 10px 10px; padding: 8px 12px; max-width: 70%; font-size: 14px; line-height: 1.5; word-break: break-word; color: var(--tx); }
+.bubble.me { background: var(--acd); border-color: var(--bd3); color: var(--ac); border-radius: 10px 3px 10px 10px; font-family: var(--mono); font-size: 13px; }
+.msg-input-wrap { padding: 10px 16px 14px; flex-shrink: 0; border-top: 1px solid var(--bd); }
+.msg-input-inner { display: flex; align-items: flex-end; gap: 8px; background: var(--bg2); border: 1px solid var(--bd2); border-radius: var(--r); padding: 9px 12px; transition: border .2s, box-shadow .2s; }
+.msg-input-inner:focus-within { border-color: var(--ac); box-shadow: 0 0 0 3px var(--acd); }
+.msg-ta { flex: 1; background: none; border: none; outline: none; color: var(--tx); font-family: var(--sans); font-size: 14px; resize: none; min-height: 22px; max-height: 100px; line-height: 1.5; }
+.msg-ta::placeholder { color: var(--tx3); }
+.send-btn { width: 30px; height: 30px; border-radius: 6px; background: var(--ac); border: none; cursor: pointer; color: #0d1117; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .15s; }
+.send-btn:hover { background: #72c8e0; }
+
+/* ── CALL SCREEN ────────────────────────────────────────────────────────── */
+#call-screen { position: fixed; inset: 0; z-index: 100; background: rgba(13,17,23,.97); display: none; align-items: center; justify-content: center; }
+#call-screen.on { display: flex; }
+.call-card { background: var(--bg2); border: 1px solid var(--bd2); border-radius: 16px; padding: 48px 40px; display: flex; flex-direction: column; align-items: center; width: 300px; text-align: center; }
+.call-ring { width: 90px; height: 90px; border-radius: 50%; position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+.call-ring::before { content: ''; position: absolute; inset: -12px; border-radius: 50%; border: 1px solid var(--ac); opacity: .4; animation: ring 2s ease-out infinite; }
+.call-ring::after { content: ''; position: absolute; inset: -24px; border-radius: 50%; border: 1px solid var(--ac); opacity: .2; animation: ring 2s ease-out infinite .6s; }
+@keyframes ring { 0% { opacity: .4; transform: scale(1); } 100% { opacity: 0; transform: scale(1.3); } }
+.call-avatar { width: 90px; height: 90px; border-radius: 50%; background: var(--bg3); border: 1px solid var(--bd2); display: flex; align-items: center; justify-content: center; font-size: 40px; }
+.call-name { font-size: 20px; font-weight: 700; color: var(--tx); margin-bottom: 4px; }
+.call-status { font-size: 12px; color: var(--tx2); margin-bottom: 20px; font-family: var(--mono); letter-spacing: .04em; }
+.call-timer { font-family: var(--mono); font-size: 26px; font-weight: 400; letter-spacing: 3px; color: var(--tx); margin-bottom: 4px; }
+.call-live-label { font-size: 11px; color: var(--green); font-family: var(--mono); margin-bottom: 20px; }
+.call-controls { display: flex; gap: 12px; }
+.ctrl-btn { width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+.ctrl-btn.mute { background: var(--bg3); color: var(--tx); }
+.ctrl-btn.mute:hover { background: var(--bg4); }
+.ctrl-btn.muted { background: rgba(224,92,110,.15); color: var(--red); }
+.ctrl-btn.end { background: var(--red); color: #fff; }
+.ctrl-btn.end:hover { transform: scale(1.05); }
+
+/* ── INCOMING CALL ──────────────────────────────────────────────────────── */
+#incoming { position: fixed; bottom: 20px; right: 20px; z-index: 200; background: var(--bg2); border: 1px solid var(--bd2); border-radius: 12px; padding: 14px 16px; width: 272px; display: none; align-items: center; gap: 10px; box-shadow: 0 8px 32px rgba(0,0,0,.4); animation: slide-in .3s cubic-bezier(.34,1.56,.64,1); }
+#incoming.show { display: flex; }
+@keyframes slide-in { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.inc-name { font-size: 13px; font-weight: 600; color: var(--tx); margin-bottom: 2px; }
+.inc-sub { font-size: 11px; color: var(--tx2); font-family: var(--mono); }
+.inc-accept { width: 36px; height: 36px; border-radius: 50%; background: rgba(76,175,130,.15); border: 1px solid rgba(76,175,130,.4); color: var(--green); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.inc-decline { width: 36px; height: 36px; border-radius: 50%; background: rgba(224,92,110,.12); border: 1px solid rgba(224,92,110,.3); color: var(--red); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+/* ── MODALS ────────────────────────────────────────────────────────────── */
+.overlay { position: fixed; inset: 0; z-index: 150; background: rgba(13,17,23,.85); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; }
+.overlay.on { display: flex; }
+.modal { background: var(--bg2); border: 1px solid var(--bd2); border-radius: 12px; width: 380px; max-width: 93vw; padding: 26px; box-shadow: 0 16px 48px rgba(0,0,0,.4); }
+.modal-title { font-size: 16px; font-weight: 700; color: var(--tx); margin-bottom: 4px; }
+.modal-sub { font-size: 13px; color: var(--tx2); margin-bottom: 20px; line-height: 1.6; }
+.tab-row { display: flex; gap: 4px; margin-bottom: 16px; background: var(--bg3); border-radius: var(--r); padding: 3px; }
+.tab-btn { flex: 1; padding: 7px; border-radius: 6px; font-family: var(--mono); font-size: 11px; cursor: pointer; border: none; background: transparent; color: var(--tx2); transition: all .15s; letter-spacing: .04em; }
+.tab-btn.on { background: var(--bg2); color: var(--tx); font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.modal-label { font-family: var(--mono); font-size: 11px; color: var(--tx3); margin-bottom: 6px; letter-spacing: .04em; text-transform: uppercase; }
+.link-box { background: var(--bg1); border: 1px solid var(--bd2); border-radius: var(--r); padding: 10px 12px; font-family: var(--mono); font-size: 10px; color: var(--ac); word-break: break-all; line-height: 1.6; flex: 1; cursor: text; user-select: all; }
+.copy-btn { background: var(--bg3); border: 1px solid var(--bd2); color: var(--tx2); border-radius: var(--r); padding: 8px 14px; font-family: var(--mono); font-size: 11px; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all .15s; }
+.copy-btn:hover { color: var(--ac); border-color: var(--bd3); }
+.copy-btn.copied { color: var(--green); border-color: rgba(76,175,130,.4); }
+.row { display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-start; }
+.share-big-btn { width: 100%; background: var(--acd); border: 1px solid var(--bd3); color: var(--ac); border-radius: var(--r); padding: 10px; font-family: var(--mono); font-size: 11px; cursor: pointer; letter-spacing: .04em; margin-bottom: 12px; transition: all .15s; }
+.share-big-btn:hover { background: var(--acg); }
+.modal-divider { border: none; border-top: 1px solid var(--bd); margin: 16px 0; }
+.btn-pair { display: flex; gap: 8px; margin-top: 12px; }
+.btn-primary { flex: 1; background: var(--ac); border: none; color: #0d1117; border-radius: var(--r); padding: 10px; font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn-ghost { flex: 1; background: var(--bg3); border: 1px solid var(--bd2); color: var(--tx2); border-radius: var(--r); padding: 10px; font-family: var(--sans); font-size: 13px; cursor: pointer; }
+
+/* ── STATUS TOAST ───────────────────────────────────────────────────────── */
+#toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 300; background: var(--bg2); border: 1px solid var(--bd2); border-radius: 20px; padding: 6px 16px; font-family: var(--mono); font-size: 11px; color: var(--tx2); display: none; align-items: center; gap: 6px; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,.3); }
+#toast.on { display: flex; }
+
+@media (max-width: 560px) {
+  .sidebar { width: 54px; }
+  .sb-search, .sb-name, .ct-info, .sec-lbl, .unread-badge, .my-info { display: none; }
+  .ct { justify-content: center; }
+  .modal { width: 92vw; padding: 20px; }
+  .call-card { width: 92vw; padding: 36px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- BOOT -->
+<div id="boot" class="screen active">
+  <div id="boot-inner">
+    <div id="boot-logo"></div>
+    <div id="boot-lines"></div>
+    <div id="boot-btn">
+      <button class="ghost-btn" onclick="goSetup()">[ STRIKE A SPARK ]</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETUP -->
+<div id="setup" class="screen">
+  <div class="setup-wrap">
+    <div style="font-family:var(--mono);font-size:11px;color:var(--ac2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Welcome to Flint</div>
+    <h1>What's your name?</h1>
+    <p>How others will see you. No account, no email, no password.</p>
+    <div class="field-label">Display Name</div>
+    <input class="text-inp" id="setup-name" type="text" placeholder="e.g. Lancer" maxlength="32"
+      onkeydown="if(event.key==='Enter')enterApp()">
+    <button class="primary-btn" onclick="enterApp()">Enter Flint →</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="screen">
+  <div class="sidebar">
+    <div class="sb-head">
+      <div class="sb-brand">
+        <svg class="sb-logo" viewBox="0 0 26 26" fill="none">
+          <polygon points="13,2 16,10 23,8 15,15 18,23 12,16 4,19 8,10" fill="#5bb8d4" opacity=".9"/>
+        </svg>
+        <span class="sb-name">Flint</span>
+        <button class="add-btn" onclick="openAdd()" title="Get invite link">+</button>
+      </div>
+      <div class="sb-search">
+        <span style="color:var(--tx3);font-size:12px">⌕</span>
+        <input placeholder="Search..." oninput="filterContacts(this.value)" id="srch">
+      </div>
+    </div>
+    <div class="net-bar">
+      <div class="net-dot" id="net-dot"></div>
+      <span class="net-label" id="net-label">Connecting...</span>
+    </div>
+    <div class="ct-list" id="ct-list"></div>
+    <div class="sb-foot">
+      <div class="my-av" id="my-av">⚡</div>
+      <div class="my-info">
+        <div class="my-name" id="my-name">—</div>
+        <div class="my-id" id="my-id">connecting...</div>
+      </div>
+      <button class="icon-btn" onclick="openInfo()">ℹ</button>
+    </div>
+  </div>
+
+  <div class="chat-pane">
+    <!-- Empty state -->
+    <div class="empty-state" id="empty-state">
+      <div class="empty-inner" style="padding-top:16px">
+        <div style="text-align:center;margin-bottom:28px">
+          <svg width="42" height="42" viewBox="0 0 42 42" style="margin-bottom:10px">
+            <polygon points="21,2 25,14 37,10 25,22 29,38 19,26 5,31 12,17" fill="#5bb8d4" opacity=".85"/>
+          </svg>
+          <div style="font-size:20px;font-weight:700;color:var(--tx);margin-bottom:4px">Spark struck.</div>
+          <div style="font-size:14px;color:var(--tx2)">No contacts yet — here's how to connect.</div>
+        </div>
+        <div class="step-card">
+          <div class="step-head"><div class="step-num">1</div><div class="step-title">Get your invite link</div></div>
+          <div class="step-body">Click <strong style="color:var(--ac)">+</strong> in the top-left. Copy your personal link and send it to anyone.</div>
+          <button class="step-btn" onclick="openAdd()">+ Get Invite Link</button>
+        </div>
+        <div class="step-card">
+          <div class="step-head"><div class="step-num muted">2</div><div class="step-title">They click it</div></div>
+          <div class="step-body">Flint opens in their browser. They enter their name. You both appear in each other's contacts automatically.</div>
+        </div>
+        <div class="step-card">
+          <div class="step-head"><div class="step-num muted">3</div><div class="step-title">Talk directly</div></div>
+          <div class="step-body">Message or call — device to device, end-to-end encrypted. No server between you.</div>
+        </div>
+        <div class="info-callout">
+          <div style="font-family:var(--mono);font-size:11px;color:var(--ac);margin-bottom:4px">What they need</div>
+          <div style="font-size:13px;color:var(--tx2);line-height:1.7">Just the link. No app download. No account. Any browser, any device.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active conversation -->
+    <div id="convo" style="display:none;flex-direction:column;height:100%;min-height:0">
+      <div class="conv-header">
+        <div class="conv-av" id="ch-av">—</div>
+        <div style="flex:1">
+          <div class="conv-name" id="ch-name">—</div>
+          <div class="conv-id" id="ch-id">—</div>
+        </div>
+        <button class="call-btn" onclick="startCall()">📞 Call</button>
+      </div>
+      <div class="msgs-area" id="msgs"></div>
+      <div class="msg-input-wrap">
+        <div class="msg-input-inner">
+          <textarea class="msg-ta" id="msg-ta" placeholder="Message..." rows="1"
+            onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" onclick="sendMsg()">↵</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CALL SCREEN -->
+<div id="call-screen" class="screen">
+  <div class="call-card">
+    <div class="call-ring"><div class="call-avatar" id="call-av">⚡</div></div>
+    <div class="call-name" id="call-nm">—</div>
+    <div class="call-status" id="call-st">Calling...</div>
+    <div id="call-live" style="display:none;flex-direction:column;align-items:center">
+      <div class="call-timer" id="call-tm">0:00</div>
+      <div class="call-live-label">● Live · Encrypted</div>
+    </div>
+    <div class="call-controls">
+      <button class="ctrl-btn mute" id="mute-btn" onclick="toggleMute()">🎙</button>
+      <button class="ctrl-btn end" onclick="endCall()">📵</button>
+    </div>
+  </div>
+</div>
+
+<!-- INCOMING CALL -->
+<div id="incoming">
+  <div style="font-size:26px" id="inc-av">⚡</div>
+  <div style="flex:1">
+    <div class="inc-name" id="inc-nm">Someone</div>
+    <div class="inc-sub">Incoming call</div>
+  </div>
+  <button class="inc-accept" onclick="acceptCall()">📞</button>
+  <button class="inc-decline" onclick="document.getElementById('incoming').classList.remove('show')">✕</button>
+</div>
+
+<!-- CONNECT MODAL -->
+<div class="overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-title">Connect with someone</div>
+    <div class="modal-sub">Share your invite link — when they click it, you connect automatically.</div>
+    <div class="tab-row">
+      <button class="tab-btn on" id="tab-link" onclick="swTab('link')">Invite Link</button>
+      <button class="tab-btn" id="tab-peer" onclick="swTab('peer')">Enter Peer ID</button>
+    </div>
+
+    <!-- Invite link panel -->
+    <div id="panel-link">
+      <div class="modal-label">Your invite link — send this to anyone</div>
+      <div class="row">
+        <div class="link-box" id="inv-link">Waiting for connection...</div>
+        <button class="copy-btn" id="copy-link-btn" onclick="copyInviteLink()">Copy</button>
+      </div>
+      <button class="share-big-btn" onclick="shareInviteLink()">↗ Share via WhatsApp / SMS / Email</button>
+      <div style="font-size:12px;color:var(--tx3);line-height:1.8;font-family:var(--mono)">
+        They click → Flint opens → they enter their name → you're connected.
+      </div>
+    </div>
+
+    <!-- Manual peer ID panel -->
+    <div id="panel-peer" style="display:none">
+      <div class="modal-label">Their Peer ID</div>
+      <input class="text-inp" id="peer-id-inp" placeholder="flint-xxxxxxxx" style="margin-bottom:10px">
+      <div class="modal-label">Their name (optional)</div>
+      <input class="text-inp" id="peer-name-inp" placeholder="e.g. Alex">
+      <div class="btn-pair">
+        <button class="btn-primary" onclick="connectToPeer()">Connect</button>
+        <button class="btn-ghost" onclick="closeModal('add-modal')">Cancel</button>
+      </div>
+    </div>
+
+    <hr class="modal-divider">
+    <div class="modal-label">Your Peer ID</div>
+    <div class="row">
+      <div class="link-box" id="my-peer-id-modal">Connecting...</div>
+      <button class="copy-btn" onclick="copyMyPeerId()">Copy</button>
+    </div>
+  </div>
+</div>
+
+<!-- INFO MODAL -->
+<div class="overlay" id="info-modal">
+  <div class="modal" style="width:320px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="font-size:16px;font-weight:700;color:var(--tx)">About Flint</div>
+      <button class="icon-btn" onclick="closeModal('info-modal')">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--tx2);line-height:1.9;margin-bottom:16px">
+      <div>⚡ &nbsp;No central server — pure device-to-device</div>
+      <div>🔒 &nbsp;End-to-end encrypted voice & chat</div>
+      <div>🆓 &nbsp;Free forever, no accounts required</div>
+    </div>
+    <div class="modal-label">Your Peer ID</div>
+    <div class="link-box" style="margin-bottom:18px" id="info-peer-id">Connecting...</div>
+    <button onclick="if(confirm('Delete all Flint data?')){localStorage.clear();location.reload()}"
+      style="width:100%;background:rgba(224,92,110,.1);border:1px solid rgba(224,92,110,.3);color:var(--red);border-radius:var(--r);padding:9px;font-family:var(--sans);font-size:13px;cursor:pointer">
+      Delete all local data
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"><div class="net-dot" style="background:var(--ac);animation:none"></div><span id="toast-msg">—</span></div>
+
+<script>
+'use strict';
+
+// ── State ─────────────────────────────────────────────────────────────────────
+var ME = {
+  name: 'Anonymous',
+  avatar: '⚡',
+  peerId: null,
+  peer: null,
+  conns: {},
+  calls: {},
+  contacts: [],
+  convos: {},
+  selId: null,
+  muted: false,
+  callTimer: null,
+  callSecs: 0,
+  localStream: null,
+  incomingCall: null,
+  inviteLink: null
+};
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+var LOGO = ' ███████╗██╗     ██╗███╗   ██╗████████╗\n ██╔════╝██║     ██║████╗  ██║╚══██╔══╝\n █████╗  ██║     ██║██╔██╗ ██║   ██║   \n ██╔══╝  ██║     ██║██║╚██╗██║   ██║   \n ██║     ███████╗██║██║ ╚████║   ██║   \n ╚═╝     ╚══════╝╚═╝╚═╝  ╚═══╝   ╚═╝   ';
+var BOOT_LINES = [
+  {t:'b', s:'Flint v2.0 — Strike a spark. Talk privately.'},
+  {t:'d', s:'──────────────────────────────────────────────'},
+  {t:'',  s:'Loading P2P engine...'},
+  {t:'d', s:'  [✓] PeerJS ready — WebRTC signaling available'},
+  {t:'d', s:'  [✓] STUN/TURN servers configured'},
+  {t:'',  s:''},
+  {t:'w', s:'  No server. No accounts. No cost. Ever.'},
+  {t:'',  s:''},
+  {t:'b', s:'Ready. Strike a spark.'}
+];
+
+function runBoot() {
+  if (window.innerWidth > 500) {
+    document.getElementById('boot-logo').textContent = LOGO;
+  }
+  var c = document.getElementById('boot-lines');
+  BOOT_LINES.forEach(function(l, i) {
+    var el = document.createElement('div');
+    el.className = 'bl ' + l.t;
+    el.textContent = l.s || ' ';
+    el.style.animationDelay = (i * 50) + 'ms';
+    c.appendChild(el);
+  });
+  setTimeout(function() {
+    document.getElementById('boot-btn').style.display = 'block';
+    checkInviteHash();
+  }, BOOT_LINES.length * 50 + 300);
+}
+
+function checkInviteHash() {
+  var h = location.hash;
+  if (!h.startsWith('#join=')) return;
+  try {
+    var raw = h.slice(6);
+    var data = JSON.parse(decodeURIComponent(atob(raw)));
+    sessionStorage.setItem('flint_join', JSON.stringify(data));
+    history.replaceState(null, '', location.pathname);
+    addBootLine('Invite from ' + (data.name || 'someone') + ' — enter your name to connect.');
+  } catch(e) {
+    addBootLine('Invalid invite link — please ask them to send a new one.');
+  }
+}
+
+function addBootLine(text) {
+  var el = document.createElement('div');
+  el.className = 'bl w';
+  el.style.animationDelay = '0ms';
+  el.textContent = '  [!] ' + text;
+  document.getElementById('boot-lines').appendChild(el);
+}
+
+function goSetup() {
+  show('setup');
+  setTimeout(function() { document.getElementById('setup-name').focus(); }, 100);
+}
+
+// ── Setup & Enter ──────────────────────────────────────────────────────────────
+function enterApp() {
+  var nm = document.getElementById('setup-name').value.trim();
+  ME.name = nm || 'Anonymous';
+  document.getElementById('my-av').textContent = ME.avatar;
+  document.getElementById('my-name').textContent = ME.name;
+  show('app');
+  renderContacts();
+  initPeer();
+}
+
+// ── PeerJS ────────────────────────────────────────────────────────────────────
+function initPeer() {
+  setNetStatus('Connecting...', false);
+  var id = 'flint-' + Math.random().toString(36).slice(2, 10);
+
+  ME.peer = new Peer(id, {
+    config: {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        {
+          urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443'],
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        }
+      ]
+    }
+  });
+
+  ME.peer.on('open', function(id) {
+    ME.peerId = id;
+    setNetStatus('Online', true);
+    document.getElementById('my-id').textContent = id;
+    document.getElementById('my-peer-id-modal').textContent = id;
+    document.getElementById('info-peer-id').textContent = id;
+    buildInviteLink();
+    showToast('Connected — ID: ' + id, 4000);
+
+    // Auto-connect if arrived via invite link
+    var pending = sessionStorage.getItem('flint_join');
+    if (pending) {
+      sessionStorage.removeItem('flint_join');
+      try {
+        var data = JSON.parse(pending);
+        connectTo(data.peerId, data.name || 'Someone', data.avatar || '⚡');
+      } catch(e) {}
+    }
+  });
+
+  ME.peer.on('connection', function(conn) {
+    wireConn(conn);
+  });
+
+  ME.peer.on('call', function(call) {
+    handleIncomingCall(call);
+  });
+
+  ME.peer.on('disconnected', function() {
+    setNetStatus('Reconnecting...', false);
+    setTimeout(function() { if (ME.peer && !ME.peer.destroyed) ME.peer.reconnect(); }, 1000);
+  });
+
+  ME.peer.on('error', function(err) {
+    setNetStatus('Error — retrying...', false);
+    setTimeout(initPeer, 4000);
+  });
+}
+
+function buildInviteLink() {
+  if (!ME.peerId) return;
+  var data = { peerId: ME.peerId, name: ME.name, avatar: ME.avatar };
+  var payload = btoa(encodeURIComponent(JSON.stringify(data)));
+  var base = location.href.split('#')[0].split('?')[0];
+  ME.inviteLink = base + '#join=' + payload;
+  // Update modal if open
+  var el = document.getElementById('inv-link');
+  if (el) el.textContent = ME.inviteLink;
+}
+
+// ── Connections ───────────────────────────────────────────────────────────────
+function connectTo(peerId, name, avatar) {
+  if (ME.conns[peerId] && ME.conns[peerId].open) return;
+  showToast('Connecting to ' + name + '...');
+  var conn = ME.peer.connect(peerId, {
+    reliable: true,
+    metadata: { name: ME.name, avatar: ME.avatar }
+  });
+  wireConn(conn, name, avatar);
+}
+
+function wireConn(conn, name, avatar) {
+  var pid = conn.peer;
+  ME.conns[pid] = conn;
+
+  conn.on('open', function() {
+    var nm = (conn.metadata && conn.metadata.name) ? conn.metadata.name : (name || pid.slice(0, 10));
+    var av = (conn.metadata && conn.metadata.avatar) ? conn.metadata.avatar : (avatar || '⚡');
+    addOrUpdateContact(pid, nm, av, 'on');
+    conn.send({ type: 'hello', name: ME.name, avatar: ME.avatar });
+    showToast('Connected to ' + nm + '!', 3000);
+  });
+
+  conn.on('data', function(data) {
+    onData(pid, data);
+  });
+
+  conn.on('close', function() {
+    updateStatus(pid, 'off');
+    showToast('Disconnected from ' + getName(pid), 3000);
+  });
+
+  conn.on('error', function() {
+    updateStatus(pid, 'off');
+  });
+}
+
+function onData(pid, data) {
+  if (!data || !data.type) return;
+
+  if (data.type === 'hello') {
+    addOrUpdateContact(pid, data.name || getName(pid), data.avatar || '⚡', 'on');
+  }
+
+  if (data.type === 'msg') {
+    if (!ME.convos[pid]) ME.convos[pid] = [];
+    ME.convos[pid].push({ f: 't', t: data.text, ts: nowTs() });
+    var c = getContact(pid);
+    if (c) { c.last = data.text; c.unread = (ME.selId === pid) ? 0 : (c.unread || 0) + 1; }
+    renderContacts();
+    if (ME.selId === pid) renderMsgs(pid);
+  }
+}
+
+function sendData(pid, obj) {
+  var conn = ME.conns[pid];
+  if (conn && conn.open) { conn.send(obj); return true; }
+  return false;
+}
+
+// ── Contacts ──────────────────────────────────────────────────────────────────
+function addOrUpdateContact(pid, name, avatar, status) {
+  var c = getContact(pid);
+  if (c) {
+    c.name = name; c.avatar = avatar; c.status = status;
+  } else {
+    ME.contacts.unshift({ id: pid, name: name, avatar: avatar, status: status, last: 'Connected', unread: 0 });
+    ME.convos[pid] = ME.convos[pid] || [];
+    ME.convos[pid].push({ f: 'sys', t: 'Connected to ' + name });
+  }
+  renderContacts();
+  if (ME.selId === pid) refreshHeader(pid);
+}
+
+function updateStatus(pid, status) {
+  var c = getContact(pid);
+  if (c) { c.status = status; renderContacts(); }
+}
+
+function getContact(pid) {
+  return ME.contacts.find(function(x) { return x.id === pid; });
+}
+
+function getName(pid) {
+  var c = getContact(pid);
+  return c ? c.name : pid.slice(0, 10);
+}
+
+function renderContacts(filter) {
+  filter = filter || '';
+  var el = document.getElementById('ct-list');
+  var list = ME.contacts.filter(function(c) {
+    return c.name.toLowerCase().includes(filter.toLowerCase());
+  });
+
+  if (!list.length) {
+    el.innerHTML = '<div style="padding:18px 10px;text-align:center;font-size:12px;color:var(--tx3);line-height:2">No contacts yet.<br><span style="color:var(--ac);cursor:pointer" onclick="openAdd()">+ Get invite link</span></div>';
+    return;
+  }
+
+  var online = list.filter(function(c) { return c.status === 'on'; });
+  var offline = list.filter(function(c) { return c.status !== 'on'; });
+  var h = '';
+  if (online.length) { h += '<div class="sec-lbl">Online</div>'; online.forEach(function(c) { h += contactHtml(c); }); }
+  if (offline.length) { h += '<div class="sec-lbl">Offline</div>'; offline.forEach(function(c) { h += contactHtml(c); }); }
+  el.innerHTML = h;
+}
+
+function contactHtml(c) {
+  return '<div class="ct ' + (ME.selId === c.id ? 'sel' : '') + '" onclick="openConvo(\'' + c.id + '\')">'
+    + '<div class="ct-av"><span>' + esc(c.avatar) + '</span><div class="ct-status ' + (c.status === 'on' ? 'on' : '') + '"></div></div>'
+    + '<div class="ct-info"><div class="ct-name">' + esc(c.name) + '</div><div class="ct-sub">' + esc(c.id).slice(0, 18) + '</div></div>'
+    + (c.unread ? '<div class="unread-badge">' + c.unread + '</div>' : '')
+    + '</div>';
+}
+
+function filterContacts(v) { renderContacts(v); }
+
+// ── Conversation ──────────────────────────────────────────────────────────────
+function openConvo(pid) {
+  ME.selId = pid;
+  var c = getContact(pid);
+  if (c) c.unread = 0;
+  renderContacts(document.getElementById('srch').value);
+  document.getElementById('empty-state').style.display = 'none';
+  var cv = document.getElementById('convo');
+  cv.style.display = 'flex';
+  refreshHeader(pid);
+  renderMsgs(pid);
+  setTimeout(function() { document.getElementById('msg-ta').focus(); }, 50);
+}
+
+function refreshHeader(pid) {
+  var c = getContact(pid);
+  if (!c) return;
+  document.getElementById('ch-av').textContent = c.avatar;
+  document.getElementById('ch-name').textContent = c.name + (c.status === 'on' ? ' ●' : '');
+  document.getElementById('ch-id').textContent = c.id;
+  document.getElementById('call-av').textContent = c.avatar;
+  document.getElementById('call-nm').textContent = c.name;
+}
+
+function renderMsgs(pid) {
+  var area = document.getElementById('msgs');
+  var msgs = ME.convos[pid] || [];
+  var c = getContact(pid);
+  var h = '<div class="sys-msg">End-to-end encrypted · ' + (c && c.status === 'on' ? '<span style="color:var(--green)">Live P2P</span>' : 'Offline') + ' · ' + esc(pid).slice(0, 16) + '...</div>';
+  var grps = [];
+  msgs.forEach(function(m) {
+    if (m.f === 'sys') { h += '<div class="sys-msg">' + esc(m.t) + '</div>'; return; }
+    if (!grps.length || grps[grps.length-1].f !== m.f) grps.push({ f: m.f, msgs: [m] });
+    else grps[grps.length-1].msgs.push(m);
+  });
+  grps.forEach(function(g) {
+    var me = g.f === 'm';
+    h += '<div class="msg-group">';
+    if (!me && c) h += '<div class="msg-head"><div class="msg-av">' + esc(c.avatar) + '</div><span class="msg-name">' + esc(c.name) + '</span><span class="msg-time">' + g.msgs[0].ts + '</span></div>';
+    g.msgs.forEach(function(m) {
+      h += '<div class="msg-row ' + (me ? 'me' : '') + '"><div class="bubble ' + (me ? 'me' : '') + '">' + esc(m.t) + '</div></div>';
+    });
+    h += '</div>';
+  });
+  area.innerHTML = h;
+  area.scrollTop = area.scrollHeight;
+}
+
+function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 100) + 'px'; }
+
+function sendMsg() {
+  var ta = document.getElementById('msg-ta');
+  var t = ta.value.trim();
+  if (!t || !ME.selId) return;
+  if (!ME.convos[ME.selId]) ME.convos[ME.selId] = [];
+  ME.convos[ME.selId].push({ f: 'm', t: t, ts: nowTs() });
+  var c = getContact(ME.selId);
+  if (c) c.last = t;
+  ta.value = ''; ta.style.height = 'auto';
+  renderMsgs(ME.selId);
+  renderContacts();
+  if (!sendData(ME.selId, { type: 'msg', text: t })) {
+    ME.convos[ME.selId].push({ f: 'sys', t: 'Not connected — they may be offline' });
+    renderMsgs(ME.selId);
+  }
+}
+
+// ── Calls ─────────────────────────────────────────────────────────────────────
+async function startCall() {
+  if (!ME.selId) return;
+  var c = getContact(ME.selId);
+  if (!c) return;
+  document.getElementById('call-st').textContent = 'Requesting microphone...';
+  document.getElementById('call-live').style.display = 'none';
+  document.getElementById('call-screen').classList.add('on');
+  try {
+    ME.localStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 48000 }
+    });
+    var call = ME.peer.call(ME.selId, ME.localStream, {
+      metadata: { name: ME.name, avatar: ME.avatar }
+    });
+    ME.calls[ME.selId] = call;
+    call.on('stream', function(remote) {
+      playRemoteAudio(remote);
+      document.getElementById('call-st').textContent = 'Connected · Encrypted';
+      document.getElementById('call-live').style.display = 'flex';
+      startCallTimer();
+    });
+    call.on('close', endCall);
+    call.on('error', endCall);
+    document.getElementById('call-st').textContent = 'Ringing...';
+  } catch(e) {
+    document.getElementById('call-st').textContent = 'Microphone access denied';
+    setTimeout(function() { document.getElementById('call-screen').classList.remove('on'); }, 2500);
+  }
+}
+
+function handleIncomingCall(call) {
+  ME.incomingCall = call;
+  var nm = (call.metadata && call.metadata.name) ? call.metadata.name : getName(call.peer);
+  var av = (call.metadata && call.metadata.avatar) ? call.metadata.avatar : '⚡';
+  document.getElementById('inc-nm').textContent = nm;
+  document.getElementById('inc-av').textContent = av;
+  document.getElementById('call-av').textContent = av;
+  document.getElementById('call-nm').textContent = nm;
+  var inc = document.getElementById('incoming');
+  inc.classList.add('show');
+  setTimeout(function() { inc.classList.remove('show'); }, 30000);
+}
+
+async function acceptCall() {
+  document.getElementById('incoming').classList.remove('show');
+  if (!ME.incomingCall) return;
+  try {
+    ME.localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    ME.incomingCall.answer(ME.localStream);
+    ME.incomingCall.on('stream', function(remote) {
+      playRemoteAudio(remote);
+      document.getElementById('call-st').textContent = 'Connected · Encrypted';
+      document.getElementById('call-live').style.display = 'flex';
+      document.getElementById('call-screen').classList.add('on');
+      startCallTimer();
+    });
+    ME.incomingCall.on('close', endCall);
+  } catch(e) {}
+}
+
+function playRemoteAudio(stream) {
+  var a = document.getElementById('remote-audio');
+  if (!a) { a = document.createElement('audio'); a.id = 'remote-audio'; a.autoplay = true; document.body.appendChild(a); }
+  a.srcObject = stream;
+  a.play().catch(function() {});
+}
+
+function startCallTimer() {
+  ME.callSecs = 0;
+  ME.callTimer = setInterval(function() {
+    ME.callSecs++;
+    var m = Math.floor(ME.callSecs / 60), s = ME.callSecs % 60;
+    document.getElementById('call-tm').textContent = m + ':' + String(s).padStart(2, '0');
+  }, 1000);
+}
+
+function endCall() {
+  clearInterval(ME.callTimer);
+  document.getElementById('call-screen').classList.remove('on');
+  document.getElementById('call-live').style.display = 'none';
+  if (ME.localStream) { ME.localStream.getTracks().forEach(function(t) { t.stop(); }); ME.localStream = null; }
+  Object.values(ME.calls).forEach(function(c) { try { c.close(); } catch(e) {} });
+  ME.calls = {};
+  ME.incomingCall = null;
+}
+
+function toggleMute() {
+  ME.muted = !ME.muted;
+  if (ME.localStream) ME.localStream.getAudioTracks().forEach(function(t) { t.enabled = !ME.muted; });
+  var btn = document.getElementById('mute-btn');
+  btn.textContent = ME.muted ? '🔇' : '🎙';
+  btn.className = 'ctrl-btn ' + (ME.muted ? 'muted' : 'mute');
+}
+
+// ── Modals ────────────────────────────────────────────────────────────────────
+function openAdd() {
+  document.getElementById('add-modal').classList.add('on');
+  // Update invite link — if peerId ready use it, otherwise poll
+  if (ME.peerId) {
+    buildInviteLink();
+    document.getElementById('inv-link').textContent = ME.inviteLink;
+  } else {
+    document.getElementById('inv-link').textContent = 'Connecting to network... (~5 seconds)';
+    var poll = setInterval(function() {
+      if (ME.peerId) {
+        clearInterval(poll);
+        buildInviteLink();
+        document.getElementById('inv-link').textContent = ME.inviteLink;
+      }
+    }, 500);
+    setTimeout(function() { clearInterval(poll); }, 15000);
+  }
+}
+
+function openInfo() { document.getElementById('info-modal').classList.add('on'); }
+
+function closeModal(id) { document.getElementById(id).classList.remove('on'); }
+
+['add-modal', 'info-modal'].forEach(function(id) {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) closeModal(id);
+  });
+});
+
+function swTab(t) {
+  var link = t === 'link';
+  document.getElementById('panel-link').style.display = link ? 'block' : 'none';
+  document.getElementById('panel-peer').style.display = link ? 'none' : 'block';
+  document.getElementById('tab-link').className = 'tab-btn' + (link ? ' on' : '');
+  document.getElementById('tab-peer').className = 'tab-btn' + (!link ? ' on' : '');
+}
+
+function copyInviteLink() {
+  var link = ME.inviteLink || document.getElementById('inv-link').textContent;
+  navigator.clipboard && navigator.clipboard.writeText(link);
+  var btn = document.getElementById('copy-link-btn');
+  btn.textContent = '✓ Copied'; btn.classList.add('copied');
+  setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+}
+
+function shareInviteLink() {
+  var link = ME.inviteLink;
+  if (!link) return;
+  var text = ME.name + ' wants to connect on Flint — private voice & chat:\n' + link;
+  if (navigator.share) navigator.share({ title: 'Flint invite', text: text, url: link }).catch(function() {});
+  else { copyInviteLink(); alert('Link copied! Paste it in WhatsApp, SMS, or email.'); }
+}
+
+function copyMyPeerId() {
+  navigator.clipboard && navigator.clipboard.writeText(ME.peerId || '');
+  event.target.textContent = 'Copied'; 
+  setTimeout(function() { event.target.textContent = 'Copy'; }, 1500);
+}
+
+function connectToPeer() {
+  var pid = document.getElementById('peer-id-inp').value.trim();
+  var nm = document.getElementById('peer-name-inp').value.trim();
+  if (!pid) return;
+  closeModal('add-modal');
+  connectTo(pid, nm || pid.slice(0, 10), '⚡');
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function show(id) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+}
+
+function esc(s) {
+  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function nowTs() {
+  var d = new Date();
+  return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+
+function setNetStatus(label, online) {
+  document.getElementById('net-label').textContent = label;
+  var dot = document.getElementById('net-dot');
+  dot.style.background = online ? 'var(--green)' : 'var(--tx3)';
+  dot.style.animation = online ? 'pulse 2.5s infinite' : 'none';
+}
+
+function showToast(msg, duration) {
+  var t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('on');
+  if (duration) setTimeout(function() { t.classList.remove('on'); }, duration);
+}
+
+runBoot();
+</script>
+</body>
+</html>

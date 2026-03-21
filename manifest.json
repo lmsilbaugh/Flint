@@ -1,0 +1,27 @@
+{
+  "name": "Flint — Private Voice & Chat",
+  "short_name": "Flint",
+  "description": "Private P2P voice, chat and file sharing. No account, no server, no cost.",
+  "start_url": "/Flint/",
+  "scope": "/Flint/",
+  "display": "standalone",
+  "background_color": "#13161a",
+  "theme_color": "#13161a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["communication", "productivity"],
+  "lang": "en"
+}

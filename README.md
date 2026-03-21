@@ -40,6 +40,43 @@ Your message history is saved locally in your browser. Next time you open Flint,
 
 ---
 
+## Where is your data stored?
+
+This is important. **Your data never leaves your device.**
+
+Flint uses your browser's built-in `localStorage` — a sandboxed storage area that every browser maintains locally on your device for each website. It is completely isolated from any server. No one can access it except the browser on that specific device.
+
+**What is saved locally:**
+- Your display name
+- Your contacts list
+- Your full message history
+- File transfer records (name, size, timestamp — not the file itself)
+
+**What is never saved anywhere:**
+- Your conversations on any server
+- Your files on any server
+- Any account information — there is none
+
+**Per device, per browser:**
+- Your laptop and phone have completely separate histories
+- Chrome and Firefox on the same computer are separate
+- Incognito / private mode saves nothing — storage is wiped when the window closes
+
+**How to view your stored data:**
+1. Open Flint in your browser
+2. Press `F12` → **Application** tab → **Local Storage** → `lmsilbaugh.github.io`
+3. You'll see the key `flint_data` with all your saved data in JSON format
+
+**How to delete your data:**
+- Click the **ℹ** button inside Flint → **Delete all local data**
+- Or: browser Settings → Clear browsing data → Site data
+- Deletion is permanent and cannot be undone
+
+**The privacy implication:**
+Because your data is stored only on your device, there is no server to breach, no database to subpoena, and no company that can hand your conversations to a third party. Your history exists only where you are.
+
+---
+
 ## Privacy & Security
 
 **What's protected:**
@@ -50,7 +87,7 @@ Your message history is saved locally in your browser. Next time you open Flint,
 
 **Known limitations:**
 - PeerJS signaling server sees your IP address when establishing connections
-- Using a VPN eliminates this — your real IP is hidden from the signaling server
+- Using a VPN hides your real IP from the signaling server
 - For maximum privacy, self-host the PeerJS server (see below)
 
 ---
@@ -75,7 +112,7 @@ Once two devices are connected, PeerJS is completely out of the picture. All com
 
 - **PeerJS** — WebRTC signaling and peer management
 - **WebRTC** — direct P2P audio, data channels, and file transfer
-- **localStorage** — local message history persistence
+- **localStorage** — local message history and contact persistence
 - **Vanilla JS** — no frameworks, no build tools, no dependencies
 - **Single HTML file** — the entire app is one file, ~57KB
 

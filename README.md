@@ -23,9 +23,14 @@ When you open Flint, you get a unique invite link. Send it to anyone via WhatsAp
 - 👥 **Group rooms** — persistent group text chat and voice rooms
 - 🔊 **Voice rooms** — drop in and out of group voice, mesh P2P audio
 - 📁 **File sharing** — send any file, any size, direct P2P with progress tracking
+- 🖼️ **Image previews** — photos display inline as thumbnails, click to download
+- ✍️ **Typing indicators** — see when someone is typing in real time
+- ✓✓ **Read receipts** — know when your messages have been read
+- 🔔 **Push notifications** — get alerted when messages arrive, even when Flint is closed
 - 💾 **Message history** — conversations and rooms persist locally across sessions
 - 🚪 **Leave rooms** — leave any room instantly, removing it from your sidebar and storage
-- 🌐 **Browser-based** — works on any device, any browser, no download
+- 📲 **Installable** — add to home screen on iOS or Android, opens like a native app
+- 🌐 **Browser-based** — works on any device, any browser, no download required
 - 🆓 **Free forever** — no subscriptions, no ads, no data collection
 - 🔗 **Invite link system** — one link connects people instantly
 
@@ -39,6 +44,7 @@ When you open Flint, you get a unique invite link. Send it to anyone via WhatsAp
 3. Send it to anyone — WhatsApp, SMS, email, anything
 4. They click it — Flint opens, they enter their name, you're connected
 5. Chat, call, and share files directly — device to device
+6. See typing indicators and read receipts in real time
 
 ### Group rooms
 1. Switch to the **Rooms** tab in the sidebar
@@ -60,6 +66,10 @@ Your message history and rooms are saved locally in your browser. Everything is 
 | Group chat | — | ✅ |
 | Voice calls | ✅ | ✅ |
 | File sharing | ✅ | ✅ |
+| Image previews | ✅ | ✅ |
+| Typing indicators | ✅ | ✅ |
+| Read receipts | ✅ | — |
+| Push notifications | ✅ | ✅ |
 | Persistent history | ✅ | ✅ |
 | Drop-in voice | — | ✅ |
 | Leave room | — | ✅ |
@@ -97,7 +107,7 @@ Flint uses your browser's built-in `localStorage` — a sandboxed storage area t
 
 **How to delete your data:**
 - Click the **ℹ** button inside Flint → **Delete all local data**
-- Or leave a room using the **✕ Leave** button — this removes that room and its data immediately
+- Or leave a room using **✕ Leave** — removes that room and its history immediately
 - Or: browser Settings → Clear browsing data → Site data
 - Deletion is permanent and cannot be undone
 
@@ -113,10 +123,12 @@ Because your data is stored only on your device, there is no server to breach, n
 - No server stores your conversations — they live only on your device
 - No account means no identity to leak or data to breach
 - Group rooms use mesh P2P — every connection is direct and encrypted
+- Typing indicators and read receipts travel over the same encrypted P2P channel
 
 **Known limitations:**
 - PeerJS signaling server sees your IP address when establishing connections
 - Using a VPN hides your real IP from the signaling server
+- Push notifications use the browser's built-in notification system — no third-party notification service
 - For maximum privacy, self-host the PeerJS server (see below)
 
 ---
@@ -150,14 +162,38 @@ Once devices are connected, PeerJS is completely out of the picture. All communi
 
 ---
 
+## Installing Flint (PWA)
+
+Flint is a Progressive Web App — it can be installed on your home screen like a native app.
+
+**On iPhone / iPad (Safari):**
+1. Open `lmsilbaugh.github.io/Flint` in Safari
+2. Tap the Share button
+3. Tap **Add to Home Screen**
+
+**On Android (Chrome):**
+1. Open `lmsilbaugh.github.io/Flint` in Chrome
+2. Tap the three-dot menu
+3. Tap **Add to Home Screen**
+
+**On desktop (Chrome / Edge):**
+1. Open `lmsilbaugh.github.io/Flint`
+2. Click the install icon in the address bar
+
+Once installed, Flint opens full screen with no browser chrome, exactly like a native app.
+
+---
+
 ## Tech Stack
 
 - **PeerJS** — WebRTC signaling and peer management
 - **WebRTC** — direct P2P audio, data channels, and file transfer
 - **Mesh networking** — every room member connects to every other member directly
 - **localStorage** — local message history, contacts, and room persistence
+- **Service Worker** — PWA offline caching
+- **Browser Notification API** — push notifications, no third-party service
 - **Vanilla JS** — no frameworks, no build tools, no dependencies
-- **Single HTML file** — the entire app is one file, ~80KB
+- **Single HTML file** — the entire app is one file, ~85KB
 
 ---
 
@@ -165,8 +201,8 @@ Once devices are connected, PeerJS is completely out of the picture. All communi
 
 Flint is a single HTML file. To host your own instance:
 
-1. Download `index.html`
-2. Upload it to any static hosting:
+1. Download `index.html`, `manifest.json`, `sw.js`, `icon-192.png`, `icon-512.png`
+2. Upload to any static hosting:
    - **GitHub Pages** (free, permanent)
    - **Vercel** (free)
    - **Any web server** — Apache, Nginx, Caddy
@@ -196,12 +232,16 @@ Then update the Peer configuration in `index.html` to point to your server.
 - [x] Group text rooms — persistent, mesh P2P
 - [x] Group voice rooms — drop in/out, mesh audio
 - [x] Direct / Rooms tab navigation
-- [x] Leave room — instant, cleans up all connections and local data
-- [ ] Read receipts and typing indicators
-- [ ] Browser push notifications
-- [ ] PWA — installable on mobile home screen
-- [ ] Self-hosted PeerJS option in settings
+- [x] Leave room
+- [x] PWA — installable on mobile and desktop
+- [x] Typing indicators — direct and group rooms
+- [x] Read receipts — direct messages
+- [x] Image previews — inline thumbnails
+- [x] Push notifications — messages, files, calls
+- [ ] Message reactions
 - [ ] Screen sharing
+- [ ] Disappearing messages
+- [ ] Message search
 - [ ] Flint for Teams (paid tier)
 
 ---

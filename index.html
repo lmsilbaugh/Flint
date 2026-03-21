@@ -113,7 +113,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .convav.room{border-radius:10px;font-family:var(--mono);font-size:13px;font-weight:600;color:var(--ac)}
 .convname{font-size:14px;font-weight:600;color:var(--tx)}
 .convid{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:1px}
-/* Typing indicator in header */
 .typing-lbl{font-family:var(--mono);font-size:10px;color:var(--ac);margin-top:1px;display:none}
 .typing-lbl.on{display:block}
 .hdacts{display:flex;gap:6px;align-items:center}
@@ -130,13 +129,39 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .mav{width:20px;height:20px;border-radius:50%;font-size:12px;display:flex;align-items:center;justify-content:center}
 .mname{font-size:12px;font-weight:500;color:var(--tx2)}
 .mtime{font-family:var(--mono);font-size:10px;color:var(--tx3)}
-.mrow{display:flex;margin-bottom:3px;align-items:flex-end;gap:4px}.mrow.me{justify-content:flex-end}
+
+/* Message rows with reaction button */
+.mrow{display:flex;margin-bottom:3px;align-items:flex-end;gap:4px;position:relative}
+.mrow.me{justify-content:flex-end}
+.mrow:hover .react-btn{opacity:1}
+.react-btn{opacity:0;transition:opacity .15s;width:22px;height:22px;border-radius:50%;background:var(--bg3);border:1px solid var(--bd2);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;order:2;position:relative}
+.mrow.me .react-btn{order:0}
+.react-btn:hover{background:var(--bg4)}
+
+/* Reaction picker */
+.react-picker{position:absolute;bottom:28px;background:var(--bg2);border:1px solid var(--bd2);border-radius:24px;padding:6px 8px;display:flex;gap:4px;z-index:50;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:pop .15s cubic-bezier(.34,1.56,.64,1)}
+.mrow.me .react-picker{right:0}
+.mrow:not(.me) .react-picker{left:0}
+@keyframes pop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+.react-emoji{font-size:18px;cursor:pointer;padding:2px 3px;border-radius:6px;transition:transform .1s;line-height:1}
+.react-emoji:hover{transform:scale(1.3);background:var(--bg3)}
+
+/* Reactions display */
+.reactions{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.reaction-pill{display:flex;align-items:center;gap:3px;background:var(--bg3);border:1px solid var(--bd2);border-radius:10px;padding:2px 7px;font-size:12px;cursor:pointer;transition:all .12s;user-select:none}
+.reaction-pill:hover{border-color:var(--bd3);background:var(--bg4)}
+.reaction-pill.mine{border-color:var(--bd3);background:var(--acd)}
+.reaction-count{font-family:var(--mono);font-size:10px;color:var(--tx2)}
+
 .bub{background:var(--bg2);border:1px solid var(--bd);border-radius:3px 10px 10px 10px;padding:8px 12px;max-width:70%;font-size:14px;line-height:1.5;word-break:break-word;color:var(--tx)}
 .bub.me{background:var(--acd);border-color:var(--bd3);color:var(--ac);border-radius:10px 3px 10px 10px;font-family:var(--mono);font-size:13px}
-/* Read receipts */
+/* Clickable links inside bubbles */
+.bub a{color:var(--ac);text-decoration:underline;word-break:break-all}
+.bub.me a{color:inherit;opacity:.85}
 .receipt{font-size:10px;color:var(--tx3);flex-shrink:0;margin-bottom:4px}
 .receipt.read{color:var(--ac)}
-/* File bubbles */
+
+/* File & image bubbles */
 .fbub{background:var(--bg2);border:1px solid var(--bd2);border-radius:10px;padding:10px 14px;max-width:280px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px}
 .fbub:hover{border-color:var(--ac);background:var(--acd)}.fbub.me{background:var(--acd);border-color:var(--bd3)}
 .ficon{font-size:24px;flex-shrink:0}
@@ -146,12 +171,22 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .fdl{font-family:var(--mono);font-size:10px;color:var(--ac);margin-top:3px}
 .fprog{height:3px;background:var(--bg4);border-radius:2px;margin-top:6px;overflow:hidden}
 .fprogbar{height:100%;background:var(--ac);border-radius:2px;transition:width .3s;width:0%}
-/* Image preview */
 .img-bub{max-width:280px;border-radius:10px;overflow:hidden;cursor:pointer;border:1px solid var(--bd2);transition:all .15s}
 .img-bub:hover{border-color:var(--ac)}
 .img-bub img{width:100%;display:block;max-height:200px;object-fit:cover}
-.img-bub-caption{padding:6px 10px;font-family:var(--mono);font-size:10px;color:var(--tx3);background:var(--bg2);display:flex;justify-content:space-between;align-items:center}
-/* Input */
+.img-bub-cap{padding:6px 10px;font-family:var(--mono);font-size:10px;color:var(--tx3);background:var(--bg2);display:flex;justify-content:space-between;align-items:center}
+
+/* Voice memo bubble */
+.vmemo{background:var(--bg2);border:1px solid var(--bd2);border-radius:10px;padding:10px 14px;max-width:260px;display:flex;align-items:center;gap:10px}
+.vmemo.me{background:var(--acd);border-color:var(--bd3)}
+.vmemo-play{width:32px;height:32px;border-radius:50%;background:var(--ac);border:none;cursor:pointer;color:#0d1117;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.vmemo-play:hover{background:#72c8e0}
+.vmemo-info{flex:1;min-width:0}
+.vmemo-dur{font-family:var(--mono);font-size:11px;color:var(--tx2)}
+.vmemo-bar{height:3px;background:var(--bg4);border-radius:2px;margin-top:5px;overflow:hidden;cursor:pointer}
+.vmemo-bar-fill{height:100%;background:var(--ac);border-radius:2px;width:0%;transition:width .1s linear}
+
+/* Input area */
 .inputwrap{padding:10px 16px 14px;flex-shrink:0;border-top:1px solid var(--bd)}
 .inputinner{display:flex;align-items:flex-end;gap:8px;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--r);padding:9px 12px;transition:border .2s,box-shadow .2s}
 .inputinner:focus-within{border-color:var(--ac);box-shadow:0 0 0 3px var(--acd)}
@@ -161,7 +196,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .sendbtn:hover{background:#72c8e0}
 .attbtn{width:30px;height:30px;border-radius:6px;background:var(--bg3);border:1px solid var(--bd2);cursor:pointer;color:var(--tx2);font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
 .attbtn:hover{color:var(--ac);border-color:var(--bd3)}
-/* Notification permission bar */
+/* Voice memo record button */
+.mic-btn{width:30px;height:30px;border-radius:6px;background:var(--bg3);border:1px solid var(--bd2);cursor:pointer;color:var(--tx2);font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;user-select:none;-webkit-user-select:none}
+.mic-btn:hover{color:var(--ac);border-color:var(--bd3)}
+.mic-btn.recording{background:rgba(224,92,110,.15);border-color:rgba(224,92,110,.4);color:var(--red);animation:recpulse 1s infinite}
+@keyframes recpulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* Notification bar */
 .notif-bar{padding:8px 16px;background:var(--acd);border-bottom:1px solid var(--bd3);display:flex;align-items:center;gap:10px;font-size:12px;color:var(--tx2)}
 .notif-bar button{font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:4px;cursor:pointer;border:1px solid var(--bd3);background:var(--ac);color:#0d1117;white-space:nowrap}
 .notif-bar .notif-dismiss{background:transparent;color:var(--tx3);border-color:transparent}
@@ -260,9 +301,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <div id="boot-inner">
     <div id="boot-logo"></div>
     <div id="boot-lines"></div>
-    <div id="boot-btn">
-      <button class="ghost-btn" onclick="goSetup()">[ STRIKE A SPARK ]</button>
-    </div>
+    <div id="boot-btn"><button class="ghost-btn" onclick="goSetup()">[ STRIKE A SPARK ]</button></div>
   </div>
 </div>
 
@@ -273,8 +312,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     <h1>What's your name?</h1>
     <p>How others will see you. No account, no email, no password.</p>
     <div class="flbl">Display Name</div>
-    <input class="tinp" id="setup-name" type="text" placeholder="Your name..." maxlength="32"
-      onkeydown="if(event.key==='Enter')enterApp()">
+    <input class="tinp" id="setup-name" type="text" placeholder="Your name..." maxlength="32" onkeydown="if(event.key==='Enter')enterApp()">
     <button class="pbtn" onclick="enterApp()">Enter Flint &rarr;</button>
   </div>
 </div>
@@ -284,9 +322,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <div class="sb">
     <div class="sbh">
       <div class="sbbrand">
-        <svg width="24" height="24" viewBox="0 0 26 26">
-          <polygon points="13,2 16,10 23,8 15,15 18,23 12,16 4,19 8,10" fill="#5bb8d4" opacity=".9"/>
-        </svg>
+        <svg width="24" height="24" viewBox="0 0 26 26"><polygon points="13,2 16,10 23,8 15,15 18,23 12,16 4,19 8,10" fill="#5bb8d4" opacity=".9"/></svg>
         <span class="sbname">Flint</span>
         <button class="addbtn" onclick="openAddForTab()">+</button>
       </div>
@@ -299,23 +335,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
         <button class="sbtab" id="tab-rooms" onclick="switchTab('rooms')">Rooms</button>
       </div>
     </div>
-    <div class="netbar">
-      <div class="ndot off" id="ndot"></div>
-      <span class="nlbl" id="nlbl">Connecting...</span>
-    </div>
+    <div class="netbar"><div class="ndot off" id="ndot"></div><span class="nlbl" id="nlbl">Connecting...</span></div>
     <div class="ctlist" id="ctlist"></div>
     <div class="sbft">
       <div class="myav" id="myav">&#9889;</div>
-      <div class="myinf">
-        <div class="mynm" id="mynm">&#8212;</div>
-        <div class="myid" id="myid">connecting...</div>
-      </div>
+      <div class="myinf"><div class="mynm" id="mynm">&#8212;</div><div class="myid" id="myid">connecting...</div></div>
       <button class="icobtn" onclick="openInfo()">&#9432;</button>
     </div>
   </div>
 
   <div class="chatpane">
-    <!-- Notification permission bar -->
     <div id="notif-bar" class="notif-bar" style="display:none">
       <span style="flex:1">&#128276; Enable notifications to get alerted when messages arrive</span>
       <button onclick="requestNotifPermission()">Enable</button>
@@ -326,9 +355,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     <div class="emptystate" id="empty-state">
       <div class="emptyinner" style="padding-top:16px">
         <div style="text-align:center;margin-bottom:28px">
-          <svg width="42" height="42" viewBox="0 0 42 42" style="margin-bottom:10px">
-            <polygon points="21,2 25,14 37,10 25,22 29,38 19,26 5,31 12,17" fill="#5bb8d4" opacity=".85"/>
-          </svg>
+          <svg width="42" height="42" viewBox="0 0 42 42" style="margin-bottom:10px"><polygon points="21,2 25,14 37,10 25,22 29,38 19,26 5,31 12,17" fill="#5bb8d4" opacity=".85"/></svg>
           <div style="font-size:20px;font-weight:700;color:var(--tx);margin-bottom:4px">Spark struck.</div>
           <div style="font-size:14px;color:var(--tx2)">Direct messages and group rooms &mdash; all private, all P2P.</div>
         </div>
@@ -357,9 +384,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
           <div class="convid" id="dch-id">&#8212;</div>
           <div class="typing-lbl" id="dch-typing">typing...</div>
         </div>
-        <div class="hdacts">
-          <button class="hdbtn" onclick="startCall()">&#128222; Call</button>
-        </div>
+        <div class="hdacts"><button class="hdbtn" onclick="startCall()">&#128222; Call</button></div>
       </div>
       <div class="msgs" id="direct-msgs"></div>
       <div class="inputwrap">
@@ -368,6 +393,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
           <input type="file" id="direct-file" style="display:none" onchange="sendFile(this,false)">
           <textarea class="msgta" id="direct-ta" placeholder="Message..." rows="1"
             onkeydown="handleKey(event,'direct')" oninput="onTyping('direct',this)"></textarea>
+          <button class="mic-btn" id="direct-mic" onmousedown="startRec('direct')" onmouseup="stopRec('direct')" ontouchstart="startRec('direct')" ontouchend="stopRec('direct')" title="Hold to record voice memo">&#127908;</button>
           <button class="sendbtn" onclick="sendMsg('direct')">&#8629;</button>
         </div>
       </div>
@@ -395,6 +421,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
           <input type="file" id="room-file" style="display:none" onchange="sendFile(this,true)">
           <textarea class="msgta" id="room-ta" placeholder="Message room..." rows="1"
             onkeydown="handleKey(event,'room')" oninput="onTyping('room',this)"></textarea>
+          <button class="mic-btn" id="room-mic" onmousedown="startRec('room')" onmouseup="stopRec('room')" ontouchstart="startRec('room')" ontouchend="stopRec('room')" title="Hold to record voice memo">&#127908;</button>
           <button class="sendbtn" onclick="sendMsg('room')">&#8629;</button>
         </div>
       </div>
@@ -404,10 +431,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     <div id="voice-room" style="display:none;flex-direction:column;height:100%;min-height:0" class="vrwrap">
       <div class="vrhd">
         <div style="font-size:20px;margin-right:4px">&#128266;</div>
-        <div style="flex:1">
-          <div class="vrtitle" id="vr-name">Voice Room</div>
-          <div class="vrstatus" id="vr-status">&#9679; Live</div>
-        </div>
+        <div style="flex:1"><div class="vrtitle" id="vr-name">Voice Room</div><div class="vrstatus" id="vr-status">&#9679; Live</div></div>
         <div class="hdacts">
           <button class="hdbtn" onclick="showRoomChat()">&#128172; Chat</button>
           <button class="hdbtn danger" onclick="leaveRoom()">&#10005; Leave</button>
@@ -423,7 +447,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   </div>
 </div>
 
-<!-- 1-1 CALL SCREEN -->
+<!-- 1-1 CALL -->
 <div id="callscreen" class="screen">
   <div class="callcard">
     <div class="callring"><div class="callav" id="call-av">&#9889;</div></div>
@@ -443,10 +467,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 <!-- INCOMING CALL -->
 <div id="incoming">
   <div style="font-size:26px" id="inc-av">&#9889;</div>
-  <div style="flex:1">
-    <div class="incname" id="inc-nm">Someone</div>
-    <div class="incsub">Incoming call</div>
-  </div>
+  <div style="flex:1"><div class="incname" id="inc-nm">Someone</div><div class="incsub">Incoming call</div></div>
   <button class="incacc" onclick="acceptCall()">&#128222;</button>
   <button class="incdec" onclick="document.getElementById('incoming').classList.remove('show')">&#10005;</button>
 </div>
@@ -462,10 +483,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     </div>
     <div id="inv-panel-link">
       <div class="mlbl">Your invite link</div>
-      <div class="mrow2">
-        <div class="lbox" id="inv-link">Waiting for connection...</div>
-        <button class="cpybtn" id="copy-inv-btn" onclick="copyInvLink()">Copy</button>
-      </div>
+      <div class="mrow2"><div class="lbox" id="inv-link">Waiting for connection...</div><button class="cpybtn" id="copy-inv-btn" onclick="copyInvLink()">Copy</button></div>
       <button class="sharebig" onclick="shareInvLink()">&#8599; Share via WhatsApp / SMS / Email</button>
       <div style="font-size:12px;color:var(--tx3);line-height:1.8;font-family:var(--mono)">They click &rarr; Flint opens &rarr; enter name &rarr; connected.</div>
     </div>
@@ -474,17 +492,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
       <input class="tinp" id="peer-id-inp" placeholder="flint-xxxxxxxx" style="margin-bottom:10px">
       <div class="mlbl">Their name (optional)</div>
       <input class="tinp" id="peer-nm-inp" placeholder="e.g. Alex">
-      <div class="btnpair">
-        <button class="btnp" onclick="connectToPeer()">Connect</button>
-        <button class="btng" onclick="closeModal('invite-modal')">Cancel</button>
-      </div>
+      <div class="btnpair"><button class="btnp" onclick="connectToPeer()">Connect</button><button class="btng" onclick="closeModal('invite-modal')">Cancel</button></div>
     </div>
     <hr class="mdivider">
     <div class="mlbl">Your Peer ID</div>
-    <div class="mrow2">
-      <div class="lbox" id="my-peerid-modal">Connecting...</div>
-      <button class="cpybtn" onclick="copyPeerId()">Copy</button>
-    </div>
+    <div class="mrow2"><div class="lbox" id="my-peerid-modal">Connecting...</div><button class="cpybtn" onclick="copyPeerId()">Copy</button></div>
   </div>
 </div>
 
@@ -500,12 +512,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
       <div class="typeopt" id="type-both" onclick="selType('both')"><div class="typeicon">&#9889;</div><div class="typelbl">Both</div></div>
     </div>
     <div class="mlbl">Room name</div>
-    <input class="tinp" id="room-name-inp" placeholder="e.g. general" maxlength="32"
-      onkeydown="if(event.key==='Enter')createRoom()">
-    <div class="btnpair">
-      <button class="btnp" onclick="createRoom()">Create Room</button>
-      <button class="btng" onclick="closeModal('room-modal')">Cancel</button>
-    </div>
+    <input class="tinp" id="room-name-inp" placeholder="e.g. general" maxlength="32" onkeydown="if(event.key==='Enter')createRoom()">
+    <div class="btnpair"><button class="btnp" onclick="createRoom()">Create Room</button><button class="btng" onclick="closeModal('room-modal')">Cancel</button></div>
   </div>
 </div>
 
@@ -515,10 +523,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     <div class="mtitle">Room Invite Link</div>
     <div class="msub">Share this &mdash; anyone who clicks it joins the room instantly.</div>
     <div class="mlbl">Room invite link</div>
-    <div class="mrow2">
-      <div class="lbox" id="room-inv-link">&#8212;</div>
-      <button class="cpybtn" id="copy-room-btn" onclick="copyRoomLink()">Copy</button>
-    </div>
+    <div class="mrow2"><div class="lbox" id="room-inv-link">&#8212;</div><button class="cpybtn" id="copy-room-btn" onclick="copyRoomLink()">Copy</button></div>
     <button class="sharebig" onclick="shareRoomLinkNative()">&#8599; Share via WhatsApp / SMS / Email</button>
     <button class="btng" style="width:100%" onclick="closeModal('room-invite-modal')">Close</button>
   </div>
@@ -535,16 +540,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
       <div>&#9889;&nbsp;&nbsp;No central server &mdash; pure device-to-device</div>
       <div>&#128274;&nbsp;&nbsp;End-to-end encrypted voice, chat &amp; files</div>
       <div>&#128101;&nbsp;&nbsp;Group rooms &mdash; text chat + persistent voice</div>
-      <div>&#128193;&nbsp;&nbsp;File sharing &mdash; no size limit, direct P2P</div>
-      <div>&#9997;&nbsp;&nbsp;Typing indicators &amp; read receipts</div>
+      <div>&#127908;&nbsp;&nbsp;Voice memos &mdash; hold mic to record &amp; send</div>
+      <div>&#128165;&nbsp;&nbsp;Reactions, typing indicators &amp; read receipts</div>
       <div>&#127358;&nbsp;&nbsp;Free forever, no accounts required</div>
     </div>
     <div class="mlbl">Your Peer ID</div>
     <div class="lbox" style="margin-bottom:18px" id="info-peerid">Connecting...</div>
-    <button onclick="clearAll()"
-      style="width:100%;background:rgba(224,92,110,.1);border:1px solid rgba(224,92,110,.3);color:var(--red);border-radius:var(--r);padding:9px;font-family:var(--sans);font-size:13px;cursor:pointer">
-      Delete all local data
-    </button>
+    <button onclick="clearAll()" style="width:100%;background:rgba(224,92,110,.1);border:1px solid rgba(224,92,110,.3);color:var(--red);border-radius:var(--r);padding:9px;font-family:var(--sans);font-size:13px;cursor:pointer">Delete all local data</button>
   </div>
 </div>
 
@@ -553,6 +555,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 
 <script>
 'use strict';
+
+var REACT_EMOJIS = ['👍','❤️','😂','😮','😢','🔥'];
 
 var S = {
   name:'Anonymous', avatar:'⚡', peerId:null, peer:null,
@@ -564,161 +568,104 @@ var S = {
   callTimer:null, callSecs:0,
   incomingCall:null, invLink:null,
   fileXfers:{}, newRoomType:'text',
-  // Typing state: pid -> timeout id
-  typingTimers:{},
-  // Read receipts: msgId -> 'sent'|'read'
-  receipts:{},
-  // Typing peers in rooms: rid -> Set of names
-  roomTyping:{}
+  typingTimers:{}, roomTyping:{},
+  recorder:null, recChunks:[], recCtx:null
 };
 
 var SK = 'flint_v2';
 
 // ── Storage ───────────────────────────────────────────────────────────────────
-function save() {
-  try {
-    localStorage.setItem(SK, JSON.stringify({
-      name:S.name, avatar:S.avatar,
+function save(){
+  try{
+    localStorage.setItem(SK,JSON.stringify({
+      name:S.name,avatar:S.avatar,
       contacts:S.contacts.map(function(c){return {id:c.id,name:c.name,avatar:c.avatar,last:c.last,status:'off',unread:0};}),
       convos:cleanMsgs(S.convos),
       rooms:Object.values(S.rooms).map(function(r){return {id:r.id,name:r.name,type:r.type,hostId:r.hostId,convos:cleanMsgs({x:r.convos}).x||[]};})
     }));
-  } catch(e) {}
+  }catch(e){}
 }
 
-function cleanMsgs(obj) {
+function cleanMsgs(obj){
   var out={};
   Object.keys(obj).forEach(function(k){
     out[k]=(obj[k]||[]).filter(function(m){return m.f!=='fp';}).map(function(m){
-      return (m.f==='file'||m.f==='fi')?{f:m.f,name:m.name,size:m.size,ts:m.ts,saved:true,isImg:m.isImg}:m;
+      if(m.f==='vm'||m.f==='vmi') return {f:m.f,dur:m.dur,ts:m.ts,saved:true,reactions:m.reactions||{}};
+      if(m.f==='file'||m.f==='fi') return {f:m.f,name:m.name,size:m.size,ts:m.ts,saved:true,isImg:m.isImg,reactions:m.reactions||{}};
+      return m;
     });
   });
   return out;
 }
 
-function load() {
-  try {
+function load(){
+  try{
     var d=JSON.parse(localStorage.getItem(SK)||'null');
-    if(!d) return false;
-    if(d.name) S.name=d.name;
-    if(d.avatar) S.avatar=d.avatar;
-    if(d.contacts) S.contacts=d.contacts;
-    if(d.convos) S.convos=d.convos;
-    if(d.rooms) d.rooms.forEach(function(r){S.rooms[r.id]={id:r.id,name:r.name,type:r.type,hostId:r.hostId,members:{},convos:r.convos||[],unread:0};});
+    if(!d)return false;
+    if(d.name)S.name=d.name;if(d.avatar)S.avatar=d.avatar;
+    if(d.contacts)S.contacts=d.contacts;if(d.convos)S.convos=d.convos;
+    if(d.rooms)d.rooms.forEach(function(r){S.rooms[r.id]={id:r.id,name:r.name,type:r.type,hostId:r.hostId,members:{},convos:r.convos||[],unread:0};});
     return true;
-  } catch(e){return false;}
+  }catch(e){return false;}
 }
 
 function clearAll(){localStorage.removeItem(SK);location.reload();}
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
-var LOGO = '  ______ _ _       _   \n |  ____| (_)     | |  \n | |__  | |_ _ __ | |_ \n |  __| | | | \'_ \\| __|\n | |    | | | | | | |_ \n |_|    |_|_|_| |_|\\__|';
+var LOGO='  ______ _ _       _   \n |  ____| (_)     | |  \n | |__  | |_ _ __ | |_ \n |  __| | | | \'_ \\| __|\n | |    | | | | | | |_ \n |_|    |_|_|_| |_|\\__|';
 
-var BOOT = [
-  {t:'b', s:'Flint v3.1 -- Direct / Group Rooms / Voice'},
-  {t:'d', s:'--------------------------------------------'},
-  {t:'',  s:'Loading P2P engine...'},
-  {t:'d', s:'  [+] PeerJS ready -- WebRTC signaling'},
-  {t:'d', s:'  [+] Typing indicators + read receipts'},
-  {t:'d', s:'  [+] Image previews enabled'},
-  {t:'d', s:'  [+] Push notifications ready'},
-  {t:'',  s:''},
-  {t:'w', s:'  No server. No accounts. No cost. Ever.'},
-  {t:'',  s:''},
-  {t:'b', s:'Ready. Strike a spark.'}
+var BOOT=[
+  {t:'b',s:'Flint v3.2 -- Direct / Group Rooms / Voice'},
+  {t:'d',s:'--------------------------------------------'},
+  {t:'',s:'Loading P2P engine...'},
+  {t:'d',s:'  [+] Clickable links in messages'},
+  {t:'d',s:'  [+] Voice memos -- hold mic to record'},
+  {t:'d',s:'  [+] Message reactions'},
+  {t:'',s:''},
+  {t:'w',s:'  No server. No accounts. No cost. Ever.'},
+  {t:'',s:''},
+  {t:'b',s:'Ready. Strike a spark.'}
 ];
 
-function runBoot() {
-  if (window.innerWidth > 500) document.getElementById('boot-logo').textContent = LOGO;
-  var c = document.getElementById('boot-lines');
-  BOOT.forEach(function(l,i){
-    var el=document.createElement('div');
-    el.className='bl '+l.t; el.textContent=l.s||' ';
-    el.style.animationDelay=(i*40)+'ms'; c.appendChild(el);
-  });
-  setTimeout(function(){
-    document.getElementById('boot-btn').style.display='block';
-    checkHash();
-  }, BOOT.length*40+300);
+function runBoot(){
+  if(window.innerWidth>500)document.getElementById('boot-logo').textContent=LOGO;
+  var c=document.getElementById('boot-lines');
+  BOOT.forEach(function(l,i){var el=document.createElement('div');el.className='bl '+l.t;el.textContent=l.s||' ';el.style.animationDelay=(i*40)+'ms';c.appendChild(el);});
+  setTimeout(function(){document.getElementById('boot-btn').style.display='block';checkHash();},BOOT.length*40+300);
 }
 
-function checkHash() {
+function checkHash(){
   var h=location.hash;
-  if(h.startsWith('#join=')){
-    try{var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));sessionStorage.setItem('fi',JSON.stringify(d));history.replaceState(null,'',location.pathname);bootNote('Invite from '+(d.name||'someone')+' -- enter your name.');}catch(e){}
-  } else if(h.startsWith('#room=')){
-    try{var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));sessionStorage.setItem('fr',JSON.stringify(d));history.replaceState(null,'',location.pathname);bootNote('Room invite: "'+d.name+'" -- enter your name.');}catch(e){}
-  }
+  if(h.startsWith('#join=')){try{var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));sessionStorage.setItem('fi',JSON.stringify(d));history.replaceState(null,'',location.pathname);bootNote('Invite from '+(d.name||'someone')+' -- enter your name.');}catch(e){}}
+  else if(h.startsWith('#room=')){try{var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));sessionStorage.setItem('fr',JSON.stringify(d));history.replaceState(null,'',location.pathname);bootNote('Room invite: "'+d.name+'" -- enter your name.');}catch(e){}}
 }
 
 function bootNote(txt){var el=document.createElement('div');el.className='bl w';el.style.animationDelay='0ms';el.textContent='  [!] '+txt;document.getElementById('boot-lines').appendChild(el);}
-
-function goSetup(){
-  if(load()&&S.name&&S.name!=='Anonymous'){launchApp();return;}
-  show('setup');setTimeout(function(){document.getElementById('setup-name').focus();},100);
-}
-
+function goSetup(){if(load()&&S.name&&S.name!=='Anonymous'){launchApp();return;}show('setup');setTimeout(function(){document.getElementById('setup-name').focus();},100);}
 function enterApp(){S.name=document.getElementById('setup-name').value.trim()||'Anonymous';save();launchApp();}
+function launchApp(){document.getElementById('myav').textContent=S.avatar;document.getElementById('mynm').textContent=S.name;show('app');renderList();initPeer();checkNotifPermission();}
 
-function launchApp(){
-  document.getElementById('myav').textContent=S.avatar;
-  document.getElementById('mynm').textContent=S.name;
-  show('app');renderList();initPeer();
-  checkNotifPermission();
-}
-
-// ── Push notifications ────────────────────────────────────────────────────────
-function checkNotifPermission() {
-  if (!('Notification' in window)) return;
-  if (Notification.permission === 'default') {
-    setTimeout(function(){document.getElementById('notif-bar').style.display='flex';}, 3000);
-  }
-}
-
-function requestNotifPermission() {
-  dismissNotifBar();
-  Notification.requestPermission().then(function(result){
-    if(result==='granted') showToast('Notifications enabled!', 2000);
-  });
-}
-
+// ── Notifications ─────────────────────────────────────────────────────────────
+function checkNotifPermission(){if(!('Notification'in window))return;if(Notification.permission==='default')setTimeout(function(){document.getElementById('notif-bar').style.display='flex';},3000);}
+function requestNotifPermission(){dismissNotifBar();Notification.requestPermission().then(function(r){if(r==='granted')showToast('Notifications enabled!',2000);});}
 function dismissNotifBar(){document.getElementById('notif-bar').style.display='none';}
-
-function sendNotification(title, body, tag) {
-  if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  if (document.visibilityState === 'visible') return; // Don't notify if app is open
-  try {
-    new Notification(title, {body:body, tag:tag||'flint', icon:'icon-192.png', badge:'icon-192.png'});
-  } catch(e) {
-    // Fallback via service worker
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.ready.then(function(reg){
-        reg.showNotification(title, {body:body, tag:tag||'flint', icon:'icon-192.png'});
-      });
-    }
-  }
+function sendNotification(title,body,tag){
+  if(!('Notification'in window)||Notification.permission!=='granted')return;
+  if(document.visibilityState==='visible')return;
+  try{new Notification(title,{body:body,tag:tag||'flint',icon:'icon-192.png'});}
+  catch(e){if(navigator.serviceWorker&&navigator.serviceWorker.controller)navigator.serviceWorker.ready.then(function(reg){reg.showNotification(title,{body:body,tag:tag||'flint',icon:'icon-192.png'});});}
 }
 
 // ── PeerJS ────────────────────────────────────────────────────────────────────
 function initPeer(){
   setNet('Connecting...',false);
-  S.peer=new Peer('flint-'+Math.random().toString(36).slice(2,10),{
-    config:{iceServers:[
-      {urls:'stun:stun.l.google.com:19302'},
-      {urls:'stun:stun1.l.google.com:19302'},
-      {urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'],username:'openrelayproject',credential:'openrelayproject'}
-    ]}
-  });
+  S.peer=new Peer('flint-'+Math.random().toString(36).slice(2,10),{config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'],username:'openrelayproject',credential:'openrelayproject'}]}});
   S.peer.on('open',function(id){
     S.peerId=id;setNet('Online',true);
-    document.getElementById('myid').textContent=id;
-    document.getElementById('my-peerid-modal').textContent=id;
-    document.getElementById('info-peerid').textContent=id;
+    document.getElementById('myid').textContent=id;document.getElementById('my-peerid-modal').textContent=id;document.getElementById('info-peerid').textContent=id;
     buildInvLink();showToast('Connected -- '+id,3000);
-    var pi=sessionStorage.getItem('fi');
-    if(pi){sessionStorage.removeItem('fi');try{var d=JSON.parse(pi);connectTo(d.peerId,d.name||'Someone',d.avatar||'⚡');}catch(e){}}
-    var pr=sessionStorage.getItem('fr');
-    if(pr){sessionStorage.removeItem('fr');try{var d=JSON.parse(pr);joinRoomFromInvite(d);}catch(e){}}
+    var pi=sessionStorage.getItem('fi');if(pi){sessionStorage.removeItem('fi');try{var d=JSON.parse(pi);connectTo(d.peerId,d.name||'Someone',d.avatar||'⚡');}catch(e){}}
+    var pr=sessionStorage.getItem('fr');if(pr){sessionStorage.removeItem('fr');try{var d=JSON.parse(pr);joinRoomFromInvite(d);}catch(e){}}
   });
   S.peer.on('connection',function(conn){if(conn.metadata&&conn.metadata.type==='room')handleRoomConn(conn);else wireConn(conn);});
   S.peer.on('call',function(call){if(call.metadata&&call.metadata.type==='rv')handleRoomVoiceCall(call);else handleIncomingCall(call);});
@@ -754,89 +701,206 @@ function wireConn(conn,name,avatar){
 
 function onDirectData(pid,data){
   if(!data||!data.type)return;
-  if(data.type==='hello') addContact(pid,data.name||getName(pid),data.avatar||'⚡','on');
-
+  if(data.type==='hello')addContact(pid,data.name||getName(pid),data.avatar||'⚡','on');
   if(data.type==='msg'){
     if(!S.convos[pid])S.convos[pid]=[];
-    var msgId='m_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
-    S.convos[pid].push({f:'t',t:data.text,ts:ts(),id:msgId});
-    var c=getCt(pid);
-    if(c){c.last=data.text;c.unread=(S.selId===pid)?0:(c.unread||0)+1;}
-    // Send read receipt if conversation is open
-    if(S.selId===pid){sendDirect(pid,{type:'read',msgId:msgId});}
-    renderList();if(S.selId===pid)renderDirect(pid);save();
-    clearTyping(pid);
-    // Push notification
-    if(S.selId!==pid||document.visibilityState!=='visible'){
-      sendNotification(getName(pid), data.text, 'msg-'+pid);
-    }
+    S.convos[pid].push({f:'t',t:data.text,ts:ts(),id:data.id,reactions:{}});
+    var c=getCt(pid);if(c){c.last=data.text;c.unread=(S.selId===pid)?0:(c.unread||0)+1;}
+    if(S.selId===pid)sendDirect(pid,{type:'read'});
+    renderList();if(S.selId===pid)renderDirect(pid);save();clearTyping(pid);
+    if(S.selId!==pid||document.visibilityState!=='visible')sendNotification(getName(pid),data.text,'msg-'+pid);
   }
-
-  if(data.type==='typing'){
-    if(S.selId===pid){
-      showTyping('dch-typing', getName(pid));
-      clearTimeout(S.typingTimers[pid]);
-      S.typingTimers[pid]=setTimeout(function(){clearTyping(pid);},3000);
-    }
-  }
-
-  if(data.type==='read'){
-    // Mark our sent messages as read
-    var msgs=S.convos[pid]||[];
-    msgs.forEach(function(m){if(m.f==='m')m.read=true;});
-    if(S.selId===pid)renderDirect(pid);
-  }
-
+  if(data.type==='typing'){if(S.selId===pid){showTyping('dch-typing',getName(pid));clearTimeout(S.typingTimers[pid]);S.typingTimers[pid]=setTimeout(function(){clearTyping(pid);},3000);}}
+  if(data.type==='read'){var msgs=S.convos[pid]||[];msgs.forEach(function(m){if(m.f==='m')m.read=true;});if(S.selId===pid)renderDirect(pid);}
+  if(data.type==='reaction'){applyReaction(S.convos[pid]||[],data.msgId,data.emoji,data.from);if(S.selId===pid)renderDirect(pid);save();}
+  if(data.type==='vm-start'||data.type==='vm-chunk'||data.type==='vm-end')onVmData(pid,data,false,null);
   onFileData(pid,data,false,null);
 }
 
 function sendDirect(pid,obj){var c=S.conns[pid];if(c&&c.open){c.send(obj);return true;}return false;}
 
-// ── Typing indicators ─────────────────────────────────────────────────────────
-var TYPING_THROTTLE = 2000;
-var lastTypingSent = {};
-
-function onTyping(ctx, ta) {
+// ── Typing ────────────────────────────────────────────────────────────────────
+var TYPING_THROTTLE=2000,lastTypingSent={};
+function onTyping(ctx,ta){
   autoR(ta);
-  var now = Date.now();
-  if(ctx==='direct' && S.selId){
-    if(!lastTypingSent[S.selId]||now-lastTypingSent[S.selId]>TYPING_THROTTLE){
-      sendDirect(S.selId,{type:'typing',name:S.name});
-      lastTypingSent[S.selId]=now;
+  var now=Date.now();
+  if(ctx==='direct'&&S.selId){if(!lastTypingSent[S.selId]||now-lastTypingSent[S.selId]>TYPING_THROTTLE){sendDirect(S.selId,{type:'typing',name:S.name});lastTypingSent[S.selId]=now;}}
+  else if(ctx==='room'&&S.selRoom){if(!lastTypingSent[S.selRoom]||now-lastTypingSent[S.selRoom]>TYPING_THROTTLE){broadcastRoom(S.selRoom,{type:'room-typing',roomId:S.selRoom,name:S.name});lastTypingSent[S.selRoom]=now;}}
+}
+function showTyping(elId,name){var el=document.getElementById(elId);if(el){el.textContent=name+' is typing...';el.classList.add('on');}}
+function clearTyping(pid){clearTimeout(S.typingTimers[pid]);delete S.typingTimers[pid];if(S.selId===pid){var el=document.getElementById('dch-typing');if(el){el.textContent='';el.classList.remove('on');}}}
+function clearRoomTyping(rid,name){if(!S.roomTyping[rid])return;S.roomTyping[rid].delete(name);if(S.selRoom===rid)updateRoomTypingLabel(rid);}
+function updateRoomTypingLabel(rid){var el=document.getElementById('rch-typing');if(!el)return;var names=S.roomTyping[rid]?Array.from(S.roomTyping[rid]).filter(function(n){return n!==S.name;}):[]; if(names.length===0){el.textContent='';el.classList.remove('on');}else{el.textContent=names.join(', ')+(names.length===1?' is':' are')+' typing...';el.classList.add('on');}}
+
+// ── Reactions ─────────────────────────────────────────────────────────────────
+function applyReaction(msgs,msgId,emoji,fromPid){
+  var m=msgs.find(function(x){return x.id===msgId;});
+  if(!m)return;
+  if(!m.reactions)m.reactions={};
+  if(!m.reactions[emoji])m.reactions[emoji]=[];
+  var idx=m.reactions[emoji].indexOf(fromPid);
+  if(idx>=0)m.reactions[emoji].splice(idx,1);
+  else m.reactions[emoji].push(fromPid);
+  if(m.reactions[emoji].length===0)delete m.reactions[emoji];
+}
+
+function sendReaction(msgId,emoji,isRoom){
+  var data={type:isRoom?'room-reaction':'reaction',msgId:msgId,emoji:emoji,from:S.peerId,roomId:isRoom?S.selRoom:undefined};
+  var msgs=isRoom?(S.rooms[S.selRoom]?S.rooms[S.selRoom].convos:[]):S.convos[S.selId]||[];
+  applyReaction(msgs,msgId,emoji,S.peerId);
+  if(isRoom){data.roomId=S.selRoom;broadcastRoom(S.selRoom,data);}
+  else sendDirect(S.selId,data);
+  if(isRoom)renderRoom(S.selRoom);else renderDirect(S.selId);
+  save();closeReactPicker();
+}
+
+var openPickerId=null;
+function toggleReactPicker(msgId,isRoom,el){
+  closeReactPicker();
+  if(openPickerId===msgId)return;
+  openPickerId=msgId;
+  var picker=document.createElement('div');
+  picker.className='react-picker';
+  picker.id='rp-'+msgId;
+  REACT_EMOJIS.forEach(function(e){
+    var btn=document.createElement('span');btn.className='react-emoji';btn.textContent=e;
+    btn.onclick=function(){sendReaction(msgId,e,isRoom);};
+    picker.appendChild(btn);
+  });
+  el.parentNode.style.position='relative';
+  el.parentNode.appendChild(picker);
+  setTimeout(function(){document.addEventListener('click',closeReactPicker,{once:true});},50);
+}
+
+function closeReactPicker(){
+  openPickerId=null;
+  document.querySelectorAll('.react-picker').forEach(function(el){el.remove();});
+}
+
+function reactionsHtml(reactions,msgId,isRoom){
+  if(!reactions||Object.keys(reactions).length===0)return '';
+  var h='<div class="reactions">';
+  Object.keys(reactions).forEach(function(e){
+    var pids=reactions[e];if(!pids||pids.length===0)return;
+    var mine=pids.indexOf(S.peerId)>=0;
+    h+='<div class="reaction-pill'+(mine?' mine':'')+'" onclick="sendReaction(\''+esc(msgId)+'\',\''+e+'\','+(isRoom?'true':'false')+')">'+e+'<span class="reaction-count">'+pids.length+'</span></div>';
+  });
+  h+='</div>';return h;
+}
+
+// ── Voice memos ───────────────────────────────────────────────────────────────
+var recStart=0;
+
+function startRec(ctx){
+  if(S.recorder&&S.recorder.state==='recording')return;
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    S.recChunks=[];recStart=Date.now();
+    var mime=MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'audio/ogg';
+    S.recorder=new MediaRecorder(stream,{mimeType:mime});
+    S.recorder.ondataavailable=function(e){if(e.data.size>0)S.recChunks.push(e.data);};
+    S.recorder.onstop=function(){
+      stream.getTracks().forEach(function(t){t.stop();});
+      var dur=Math.round((Date.now()-recStart)/1000);
+      var blob=new Blob(S.recChunks,{type:mime});
+      sendVoiceMemo(blob,dur,ctx==='room');
+    };
+    S.recorder.start();
+    var btn=document.getElementById(ctx+'-mic');if(btn)btn.classList.add('recording');
+  }).catch(function(){showToast('Microphone access denied',2000);});
+}
+
+function stopRec(ctx){
+  if(S.recorder&&S.recorder.state==='recording'){S.recorder.stop();}
+  var btn=document.getElementById(ctx+'-mic');if(btn)btn.classList.remove('recording');
+}
+
+var VM_CHUNK=32768;
+
+function sendVoiceMemo(blob,dur,isRoom){
+  var pid=isRoom?null:S.selId,rid=isRoom?S.selRoom:null;
+  if(isRoom&&!rid)return;if(!isRoom&&!pid)return;
+  var vmId='vm_'+Date.now();
+  var pm={f:'fp',id:vmId,name:'Voice memo',size:blob.size,progress:0,sending:true,ts:ts()};
+  var msgs=isRoom?S.rooms[rid].convos:S.convos[pid]||(S.convos[pid]=[]);
+  msgs.push(pm);if(isRoom)renderRoom(rid);else renderDirect(pid);
+  var startMsg={type:isRoom?'room-vm-start':'vm-start',id:vmId,dur:dur,mime:blob.type};
+  if(isRoom){startMsg.roomId=rid;broadcastRoom(rid,startMsg);}else sendDirect(pid,startMsg);
+  blob.arrayBuffer().then(function(buf){
+    var total=buf.byteLength,offset=0;
+    function next(){
+      if(offset>=total){
+        var endMsg={type:isRoom?'room-vm-end':'vm-end',id:vmId};
+        if(isRoom){endMsg.roomId=rid;broadcastRoom(rid,endMsg);}else sendDirect(pid,endMsg);
+        var url=URL.createObjectURL(blob);
+        var idx=msgs.findIndex(function(m){return m.f==='fp'&&m.id===vmId;});
+        if(idx>=0)msgs.splice(idx,1);
+        msgs.push({f:'vm',id:vmId,url:url,dur:dur,ts:ts(),reactions:{}});
+        if(isRoom)renderRoom(rid);else renderDirect(pid);
+        save();return;
+      }
+      var chunk=buf.slice(offset,offset+VM_CHUNK);
+      var cm={type:isRoom?'room-vm-chunk':'vm-chunk',id:vmId,chunk:chunk};
+      if(isRoom){cm.roomId=rid;broadcastRoom(rid,cm);}else sendDirect(pid,cm);
+      offset+=chunk.byteLength;
+      var pct=Math.round((offset/total)*100);
+      var pm2=msgs.find(function(m){return m.f==='fp'&&m.id===vmId;});
+      if(pm2){pm2.progress=Math.min(pct,99);if(isRoom)renderRoom(rid);else renderDirect(pid);}
+      setTimeout(next,5);
     }
-  } else if(ctx==='room' && S.selRoom){
-    if(!lastTypingSent[S.selRoom]||now-lastTypingSent[S.selRoom]>TYPING_THROTTLE){
-      broadcastRoom(S.selRoom,{type:'room-typing',roomId:S.selRoom,name:S.name});
-      lastTypingSent[S.selRoom]=now;
-    }
+    next();
+  });
+}
+
+function onVmData(fromPid,data,isRoom,rid){
+  var vmId=data.id;if(!vmId)return;
+  var key=(isRoom?'rvm_':'')+vmId;
+  if(data.type==='vm-start'||data.type==='room-vm-start'){
+    S.fileXfers[key]={dur:data.dur,mime:data.mime||'audio/webm',chunks:[],received:0,size:0};
+    var pm={f:'fp',id:vmId,name:'Voice memo',size:0,progress:0,ts:ts()};
+    var msgs=isRoom?S.rooms[rid].convos:S.convos[fromPid]||(S.convos[fromPid]=[]);
+    msgs.push(pm);if(isRoom)renderRoom(rid);else renderDirect(fromPid);
+  }
+  if(data.type==='vm-chunk'||data.type==='room-vm-chunk'){
+    var ft=S.fileXfers[key];if(!ft)return;
+    ft.chunks.push(data.chunk);ft.received+=data.chunk.byteLength;
+  }
+  if(data.type==='vm-end'||data.type==='room-vm-end'){
+    var ft=S.fileXfers[key];if(!ft)return;
+    var blob=new Blob(ft.chunks,{type:ft.mime});
+    var url=URL.createObjectURL(blob);delete S.fileXfers[key];
+    var msgs=isRoom?S.rooms[rid].convos:S.convos[fromPid];
+    var idx=msgs.findIndex(function(m){return m.f==='fp'&&m.id===vmId;});
+    if(idx>=0)msgs.splice(idx,1);
+    msgs.push({f:'vmi',id:vmId,url:url,dur:ft.dur,ts:ts(),reactions:{}});
+    if(isRoom)renderRoom(rid);else{var c=getCt(fromPid);if(c){c.last='🎤 Voice memo';c.unread=(S.selId===fromPid)?0:(c.unread||0)+1;}renderDirect(fromPid);}
+    renderList();save();
   }
 }
 
-function showTyping(elId, name) {
-  var el=document.getElementById(elId);
-  if(el){el.textContent=name+' is typing...';el.classList.add('on');}
+function playVm(url,btnEl,barEl){
+  var audio=new Audio(url);
+  btnEl.textContent='⏸';
+  var fill=barEl.querySelector('.vmemo-bar-fill');
+  audio.ontimeupdate=function(){if(audio.duration)fill.style.width=((audio.currentTime/audio.duration)*100)+'%';};
+  audio.onended=function(){btnEl.textContent='▶';fill.style.width='0%';};
+  audio.onerror=function(){btnEl.textContent='▶';};
+  audio.play();
+  btnEl.onclick=function(){if(audio.paused){audio.play();btnEl.textContent='⏸';}else{audio.pause();btnEl.textContent='▶';}};
 }
 
-function clearTyping(pid){
-  clearTimeout(S.typingTimers[pid]);
-  delete S.typingTimers[pid];
-  if(S.selId===pid){
-    var el=document.getElementById('dch-typing');
-    if(el){el.textContent='';el.classList.remove('on');}
-  }
-}
-
-function clearRoomTyping(rid,name){
-  if(!S.roomTyping[rid])return;
-  S.roomTyping[rid].delete(name);
-  if(S.selRoom===rid)updateRoomTypingLabel(rid);
-}
-
-function updateRoomTypingLabel(rid){
-  var el=document.getElementById('rch-typing');if(!el)return;
-  var names=S.roomTyping[rid]?Array.from(S.roomTyping[rid]).filter(function(n){return n!==S.name;}):[];
-  if(names.length===0){el.textContent='';el.classList.remove('on');}
-  else{el.textContent=names.join(', ')+(names.length===1?' is':' are')+' typing...';el.classList.add('on');}
+function vmBubHtml(m,isMe,isRoom){
+  var f=isMe?'vm':'vmi';
+  var dur=m.dur?m.dur+'s':'--';
+  var uid='vb-'+m.id;
+  return '<div class="mrow '+(isMe?'me':'')+'" style="margin-bottom:4px">'
+    +'<div class="vmemo '+(isMe?'me':'')+'">'
+    +'<button class="vmemo-play" id="'+uid+'" onclick="playVm(\''+m.url+'\',this,document.getElementById(\'vb2-'+m.id+'\'))">▶</button>'
+    +'<div class="vmemo-info"><div class="vmemo-dur">Voice memo &middot; '+dur+'</div>'
+    +'<div class="vmemo-bar" id="vb2-'+m.id+'"><div class="vmemo-bar-fill"></div></div></div>'
+    +'</div>'
+    +(isMe?'<div class="react-btn" onclick="toggleReactPicker(\''+m.id+'\','+(isRoom?'true':'false')+',this)">⚡</div>':'<div class="react-btn" onclick="toggleReactPicker(\''+m.id+'\','+(isRoom?'true':'false')+',this)">⚡</div>')
+    +'</div>'
+    +reactionsHtml(m.reactions||{},m.id,isRoom);
 }
 
 // ── Room system ───────────────────────────────────────────────────────────────
@@ -845,103 +909,60 @@ function createRoom(){
   closeModal('room-modal');
   var rid='room-'+Math.random().toString(36).slice(2,10);
   S.rooms[rid]={id:rid,name:nm,type:S.newRoomType,hostId:S.peerId,members:{},convos:[],unread:0};
-  S.rooms[rid].members[S.peerId]={name:S.name,avatar:S.avatar};
-  S.roomConns[rid]={};
+  S.rooms[rid].members[S.peerId]={name:S.name,avatar:S.avatar};S.roomConns[rid]={};
   save();renderList();switchTab('rooms');openRoom(rid);showToast('Room "'+nm+'" created!',2000);
 }
 
-function selType(t){
-  S.newRoomType=t;
-  ['text','voice','both'].forEach(function(x){document.getElementById('type-'+x).className='typeopt'+(t===x?' sel':'');});
-}
+function selType(t){S.newRoomType=t;['text','voice','both'].forEach(function(x){document.getElementById('type-'+x).className='typeopt'+(t===x?' sel':'');});}
 
 function joinRoomFromInvite(d){
-  var rid=d.roomId;
-  if(S.rooms[rid]){openRoom(rid);return;}
-  S.rooms[rid]={id:rid,name:d.name,type:d.type,hostId:d.hostId,members:{},convos:[],unread:0};
-  S.roomConns[rid]={};
+  var rid=d.roomId;if(S.rooms[rid]){openRoom(rid);return;}
+  S.rooms[rid]={id:rid,name:d.name,type:d.type,hostId:d.hostId,members:{},convos:[],unread:0};S.roomConns[rid]={};
   save();renderList();connectRoomPeer(rid,d.hostId,d.hostName||'Host','⚡',true);switchTab('rooms');openRoom(rid);
 }
 
 function connectRoomPeer(rid,pid,name,avatar,isInit){
-  if(!pid||pid===S.peerId)return;
-  if(S.roomConns[rid]&&S.roomConns[rid][pid])return;
+  if(!pid||pid===S.peerId)return;if(S.roomConns[rid]&&S.roomConns[rid][pid])return;
   var conn=S.peer.connect(pid,{reliable:true,metadata:{type:'room',roomId:rid,roomName:S.rooms[rid]?S.rooms[rid].name:'',name:S.name,avatar:S.avatar}});
-  if(!S.roomConns[rid])S.roomConns[rid]={};
-  S.roomConns[rid][pid]=conn;
-  conn.on('open',function(){
-    var r=S.rooms[rid];if(!r)return;
-    r.members[pid]={name:name||pid.slice(0,10),avatar:avatar||'⚡'};
-    conn.send({type:'room-hello',roomId:rid,name:S.name,avatar:S.avatar,peerId:S.peerId});
-    if(isInit)conn.send({type:'room-req-peers',roomId:rid});
-    updRoomHd(rid);save();
-  });
+  if(!S.roomConns[rid])S.roomConns[rid]={};S.roomConns[rid][pid]=conn;
+  conn.on('open',function(){var r=S.rooms[rid];if(!r)return;r.members[pid]={name:name||pid.slice(0,10),avatar:avatar||'⚡'};conn.send({type:'room-hello',roomId:rid,name:S.name,avatar:S.avatar,peerId:S.peerId});if(isInit)conn.send({type:'room-req-peers',roomId:rid});updRoomHd(rid);save();});
   conn.on('data',function(d){onRoomData(pid,d);});
   conn.on('close',function(){var r=S.rooms[rid];if(r){delete r.members[pid];updRoomHd(rid);}if(S.roomConns[rid])delete S.roomConns[rid][pid];if(S.selRoom===rid)renderRoom(rid);});
   conn.on('error',function(){});
 }
 
 function handleRoomConn(conn){
-  var meta=conn.metadata;if(!meta||meta.type!=='room')return;
-  var rid=meta.roomId;
+  var meta=conn.metadata;if(!meta||meta.type!=='room')return;var rid=meta.roomId;
   if(!S.rooms[rid]){S.rooms[rid]={id:rid,name:meta.roomName||'Room',type:'both',hostId:conn.peer,members:{},convos:[],unread:0};S.roomConns[rid]={};save();renderList();}
-  if(!S.roomConns[rid])S.roomConns[rid]={};
-  S.roomConns[rid][conn.peer]=conn;
+  if(!S.roomConns[rid])S.roomConns[rid]={};S.roomConns[rid][conn.peer]=conn;
   conn.on('open',function(){var r=S.rooms[rid];if(r)r.members[conn.peer]={name:meta.name||conn.peer.slice(0,10),avatar:meta.avatar||'⚡'};updRoomHd(rid);});
   conn.on('data',function(d){onRoomData(conn.peer,d);});
   conn.on('close',function(){var r=S.rooms[rid];if(r){delete r.members[conn.peer];updRoomHd(rid);}if(S.roomConns[rid])delete S.roomConns[rid][conn.peer];if(S.selRoom===rid)renderRoom(rid);});
 }
 
 function onRoomData(fromPid,data){
-  if(!data||!data.type||!data.roomId)return;
-  var rid=data.roomId,r=S.rooms[rid];if(!r)return;
-
+  if(!data||!data.type||!data.roomId)return;var rid=data.roomId,r=S.rooms[rid];if(!r)return;
   if(data.type==='room-hello'){r.members[fromPid]={name:data.name||fromPid.slice(0,10),avatar:data.avatar||'⚡'};updRoomHd(rid);save();}
-  if(data.type==='room-req-peers'){
-    var peers=Object.keys(r.members).filter(function(p){return p!==fromPid&&p!==S.peerId;});
-    var conn=S.roomConns[rid]&&S.roomConns[rid][fromPid];
-    if(conn&&conn.open)conn.send({type:'room-peer-list',roomId:rid,peers:peers,members:r.members});
-  }
-  if(data.type==='room-peer-list'){
-    data.peers.forEach(function(pid){if(pid!==S.peerId&&!(S.roomConns[rid]&&S.roomConns[rid][pid])){var m=data.members&&data.members[pid];connectRoomPeer(rid,pid,m?m.name:'',m?m.avatar:'⚡',false);}});
-    if(data.members)Object.keys(data.members).forEach(function(pid){if(pid!==S.peerId)r.members[pid]=data.members[pid];});
-    updRoomHd(rid);
-  }
-  if(data.type==='room-msg'){
-    r.convos.push({f:'t',from:fromPid,name:data.name,av:data.avatar,t:data.text,ts:ts()});
-    if(S.selRoom!==rid)r.unread=(r.unread||0)+1;
-    renderList();if(S.selRoom===rid)renderRoom(rid);save();
-    if(S.roomTyping[rid])clearRoomTyping(rid,data.name);
-    // Push notification
-    if(S.selRoom!==rid||document.visibilityState!=='visible'){
-      sendNotification('#'+r.name, data.name+': '+data.text, 'room-'+rid);
-    }
-  }
-  if(data.type==='room-typing'){
-    if(!S.roomTyping[rid])S.roomTyping[rid]=new Set();
-    S.roomTyping[rid].add(data.name);
-    if(S.selRoom===rid)updateRoomTypingLabel(rid);
-    var key='rtyp_'+rid+'_'+data.name;
-    clearTimeout(S.typingTimers[key]);
-    S.typingTimers[key]=setTimeout(function(){clearRoomTyping(rid,data.name);},3000);
-  }
+  if(data.type==='room-req-peers'){var peers=Object.keys(r.members).filter(function(p){return p!==fromPid&&p!==S.peerId;});var conn=S.roomConns[rid]&&S.roomConns[rid][fromPid];if(conn&&conn.open)conn.send({type:'room-peer-list',roomId:rid,peers:peers,members:r.members});}
+  if(data.type==='room-peer-list'){data.peers.forEach(function(pid){if(pid!==S.peerId&&!(S.roomConns[rid]&&S.roomConns[rid][pid])){var m=data.members&&data.members[pid];connectRoomPeer(rid,pid,m?m.name:'',m?m.avatar:'⚡',false);}});if(data.members)Object.keys(data.members).forEach(function(pid){if(pid!==S.peerId)r.members[pid]=data.members[pid];});updRoomHd(rid);}
+  if(data.type==='room-msg'){r.convos.push({f:'t',from:fromPid,name:data.name,av:data.avatar,t:data.text,ts:ts(),id:data.id||('rm_'+Date.now()),reactions:{}});if(S.selRoom!==rid)r.unread=(r.unread||0)+1;renderList();if(S.selRoom===rid)renderRoom(rid);save();if(S.roomTyping[rid])clearRoomTyping(rid,data.name);if(S.selRoom!==rid||document.visibilityState!=='visible')sendNotification('#'+r.name,data.name+': '+data.text,'room-'+rid);}
+  if(data.type==='room-typing'){if(!S.roomTyping[rid])S.roomTyping[rid]=new Set();S.roomTyping[rid].add(data.name);if(S.selRoom===rid)updateRoomTypingLabel(rid);var key='rtyp_'+rid+'_'+data.name;clearTimeout(S.typingTimers[key]);S.typingTimers[key]=setTimeout(function(){clearRoomTyping(rid,data.name);},3000);}
+  if(data.type==='room-reaction'){applyReaction(r.convos,data.msgId,data.emoji,data.from);if(S.selRoom===rid)renderRoom(rid);save();}
   if(data.type==='room-file-start'||data.type==='room-file-chunk'||data.type==='room-file-end')onFileData(fromPid,data,true,rid);
+  if(data.type==='room-vm-start'||data.type==='room-vm-chunk'||data.type==='room-vm-end')onVmData(fromPid,data,true,rid);
 }
 
 function broadcastRoom(rid,obj){var rc=S.roomConns[rid];if(!rc)return;Object.values(rc).forEach(function(c){if(c&&c.open)c.send(obj);});}
 
 // ── Leave room ────────────────────────────────────────────────────────────────
 function leaveRoom(){
-  if(!S.selRoom)return;
-  var rid=S.selRoom,rname=S.rooms[rid]?S.rooms[rid].name:'room';
+  if(!S.selRoom)return;var rid=S.selRoom,rname=S.rooms[rid]?S.rooms[rid].name:'room';
   if(S.localStream){S.localStream.getTracks().forEach(function(t){t.stop();});S.localStream=null;}
   var vc=S.voiceConns[rid];if(vc)Object.values(vc).forEach(function(c){try{c.close();}catch(e){}});
   var rc=S.roomConns[rid];if(rc)Object.values(rc).forEach(function(c){try{c.close();}catch(e){}});
   document.querySelectorAll('[id^="vra-'+rid+'-"]').forEach(function(el){el.remove();});
   delete S.rooms[rid];delete S.roomConns[rid];delete S.voiceConns[rid];delete S.voiceStreams[rid];delete S.roomTyping[rid];
-  S.selRoom=null;S.activeView=null;
-  hideAll();document.getElementById('empty-state').style.display='flex';
-  renderList();save();showToast('Left "'+rname+'"',2000);
+  S.selRoom=null;S.activeView=null;hideAll();document.getElementById('empty-state').style.display='flex';renderList();save();showToast('Left "'+rname+'"',2000);
 }
 
 // ── Room UI ───────────────────────────────────────────────────────────────────
@@ -951,62 +972,56 @@ function showRoomChat(){
   if(!S.selRoom)return;var r=S.rooms[S.selRoom];if(!r)return;
   S.activeView='room-chat';hideAll();
   document.getElementById('room-chat').style.display='flex';
-  document.getElementById('rch-av').textContent='#';
-  document.getElementById('rch-name').textContent=r.name;
+  document.getElementById('rch-av').textContent='#';document.getElementById('rch-name').textContent=r.name;
   updRoomHd(S.selRoom);renderRoom(S.selRoom);updateRoomTypingLabel(S.selRoom);
   var vbtn=document.getElementById('rch-voice-btn');if(vbtn)vbtn.style.display=(r.type==='text')?'none':'flex';
 }
 
-function joinVoice(){
-  if(!S.selRoom)return;var r=S.rooms[S.selRoom];if(!r)return;
-  if(r.type==='text'){showToast('Text-only room',2000);return;}
-  showVoiceRoom(S.selRoom);startVoice(S.selRoom);
-}
-
-function showVoiceRoom(rid){
-  var r=S.rooms[rid];if(!r)return;
-  S.activeView='voice-room';hideAll();
-  document.getElementById('voice-room').style.display='flex';
-  document.getElementById('vr-name').textContent=r.name;
-  document.getElementById('vr-status').textContent='● Live';
-  renderVoicePeers(rid);
-}
-
-function updRoomHd(rid){
-  if(S.selRoom!==rid)return;var r=S.rooms[rid];if(!r)return;
-  var n=Object.keys(r.members).length;
-  document.getElementById('rch-members').textContent=n+' member'+(n!==1?'s':'')+' online';
-}
+function joinVoice(){if(!S.selRoom)return;var r=S.rooms[S.selRoom];if(!r)return;if(r.type==='text'){showToast('Text-only room',2000);return;}showVoiceRoom(S.selRoom);startVoice(S.selRoom);}
+function showVoiceRoom(rid){var r=S.rooms[rid];if(!r)return;S.activeView='voice-room';hideAll();document.getElementById('voice-room').style.display='flex';document.getElementById('vr-name').textContent=r.name;document.getElementById('vr-status').textContent='● Live';renderVoicePeers(rid);}
+function updRoomHd(rid){if(S.selRoom!==rid)return;var r=S.rooms[rid];if(!r)return;var n=Object.keys(r.members).length;document.getElementById('rch-members').textContent=n+' member'+(n!==1?'s':'')+' online';}
 
 // ── Render helpers ────────────────────────────────────────────────────────────
-function isImageFile(name){return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(name||'');}
+function isImgFile(name){return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(name||'');}
 
-function imgBubHtml(m, isMe){
-  var urlAttr = m.url ? ('onclick="dlFile(\''+m.url+'\',\''+esc(m.name)+'\')" ') : '';
-  return '<div class="mrow '+(isMe?'me':'')+'" style="margin-bottom:8px">'
-    +'<div class="img-bub" '+urlAttr+'>'
-    +(m.url ? '<img src="'+m.url+'" alt="'+esc(m.name)+'" loading="lazy">' : '<div style="padding:20px;text-align:center;color:var(--tx3);font-size:12px">Image expired</div>')
-    +'<div class="img-bub-caption"><span>'+esc(m.name)+'</span><span>'+fbytes(m.size)+'</span></div>'
-    +'</div></div>';
+// Linkify: detect URLs and wrap in <a> tags after HTML escaping
+function linkify(text){
+  var escaped=esc(text);
+  return escaped.replace(/(https?:\/\/[^\s&lt;&gt;"]+)/g,function(url){
+    return '<a href="'+url+'" target="_blank" rel="noopener noreferrer">'+url+'</a>';
+  });
 }
 
-function fileBubHtml(m, isMe){
-  if(m.isImg) return imgBubHtml(m, isMe);
-  return '<div class="mrow '+(isMe?'me':'')+'" style="margin-bottom:8px">'
+function imgBubHtml(m,isMe,isRoom){
+  return '<div class="mrow '+(isMe?'me':'')+'" style="margin-bottom:4px">'
+    +'<div class="img-bub" '+(m.url?'onclick="dlFile(\''+m.url+'\',\''+esc(m.name)+'\')"':'')+' >'
+    +(m.url?'<img src="'+m.url+'" alt="'+esc(m.name)+'" loading="lazy">':'<div style="padding:20px;text-align:center;color:var(--tx3);font-size:12px">Image expired</div>')
+    +'<div class="img-bub-cap"><span>'+esc(m.name)+'</span><span>'+fbytes(m.size)+'</span></div>'
+    +'</div>'
+    +'<div class="react-btn" onclick="toggleReactPicker(\''+m.id+'\','+(isRoom?'true':'false')+',this)">⚡</div>'
+    +'</div>'
+    +reactionsHtml(m.reactions||{},m.id,isRoom);
+}
+
+function fileBubHtml(m,isMe,isRoom){
+  if(m.isImg)return imgBubHtml(m,isMe,isRoom);
+  return '<div class="mrow '+(isMe?'me':'')+'" style="margin-bottom:4px">'
     +'<div class="fbub '+(isMe?'me':'')+'" '+(m.url?'onclick="dlFile(\''+m.url+'\',\''+esc(m.name)+'\')"':'')+' >'
     +'<div class="ficon">'+ficon(m.name)+'</div>'
-    +'<div class="finfo"><div class="fname">'+esc(m.name)+'</div>'
-    +'<div class="fsize">'+fbytes(m.size)+'</div>'
-    +(m.saved&&!m.url?'<div class="fdl" style="color:var(--tx3)">File expired</div>':'<div class="fdl">Click to download</div>')
-    +'</div></div></div>';
+    +'<div class="finfo"><div class="fname">'+esc(m.name)+'</div><div class="fsize">'+fbytes(m.size)+'</div>'
+    +(m.url?'<div class="fdl">Click to download</div>':'<div class="fdl" style="color:var(--tx3)">File expired</div>')
+    +'</div></div>'
+    +'<div class="react-btn" onclick="toggleReactPicker(\''+m.id+'\','+(isRoom?'true':'false')+',this)">⚡</div>'
+    +'</div>'
+    +reactionsHtml(m.reactions||{},m.id,isRoom);
 }
 
 function fileProgHtml(m){
-  return '<div class="mrow '+(m.sending?'me':'')+'" style="margin-bottom:8px">'
+  return '<div class="mrow '+(m.sending?'me':'')+'" style="margin-bottom:4px">'
     +'<div class="fbub '+(m.sending?'me':'')+'">'
     +'<div class="ficon">'+ficon(m.name)+'</div>'
     +'<div class="finfo"><div class="fname">'+esc(m.name)+'</div>'
-    +'<div class="fsize">'+fbytes(m.size)+' · '+(m.sending?'Sending':'Receiving')+' '+m.progress+'%</div>'
+    +'<div class="fsize">'+fbytes(m.size||0)+' · '+(m.sending?'Sending':'Receiving')+' '+m.progress+'%</div>'
     +'<div class="fprog"><div class="fprogbar" style="width:'+m.progress+'%"></div></div>'
     +'</div></div></div>';
 }
@@ -1018,7 +1033,8 @@ function renderRoom(rid){
   var grps=[];
   msgs.forEach(function(m){
     if(m.f==='sys'){h+='<div class="sysmsg">'+esc(m.t)+'</div>';return;}
-    if(m.f==='file'||m.f==='fi'){h+=fileBubHtml(m,m.f==='file');return;}
+    if(m.f==='file'||m.f==='fi'){h+=fileBubHtml(m,m.f==='file',true);return;}
+    if(m.f==='vm'||m.f==='vmi'){h+=vmBubHtml(m,m.f==='vm',true);return;}
     if(m.f==='fp'){h+=fileProgHtml(m);return;}
     var me=m.from===S.peerId;
     if(!grps.length||grps[grps.length-1].from!==m.from)grps.push({from:m.from,name:m.name,av:m.av,msgs:[m]});
@@ -1027,7 +1043,11 @@ function renderRoom(rid){
   grps.forEach(function(g){
     var me=g.from===S.peerId;h+='<div class="mgroup">';
     if(!me)h+='<div class="mhead"><div class="mav">'+(g.av||'⚡')+'</div><span class="mname">'+esc(g.name||'')+'</span><span class="mtime">'+g.msgs[0].ts+'</span></div>';
-    g.msgs.forEach(function(m){h+='<div class="mrow '+(me?'me':'')+'"><div class="bub '+(me?'me':'')+'">'+esc(m.t)+'</div></div>';});
+    g.msgs.forEach(function(m){
+      h+='<div class="mrow '+(me?'me':'')+'"><div class="bub '+(me?'me':'')+'">'+linkify(m.t)+'</div>'
+        +'<div class="react-btn" onclick="toggleReactPicker(\''+m.id+'\',true,this)">⚡</div></div>'
+        +reactionsHtml(m.reactions||{},m.id,true);
+    });
     h+='</div>';
   });
   area.innerHTML=h;area.scrollTop=area.scrollHeight;
@@ -1041,13 +1061,9 @@ function openConvo(pid){
   document.getElementById('dch-av').textContent=c?c.avatar:'⚡';
   document.getElementById('dch-name').textContent=(c?c.name:'—')+(c&&c.status==='on'?' ●':'');
   document.getElementById('dch-id').textContent=pid;
-  document.getElementById('call-av').textContent=c?c.avatar:'⚡';
-  document.getElementById('call-nm').textContent=c?c.name:'—';
-  // Clear typing indicator when opening convo
+  document.getElementById('call-av').textContent=c?c.avatar:'⚡';document.getElementById('call-nm').textContent=c?c.name:'—';
   var tl=document.getElementById('dch-typing');if(tl){tl.textContent='';tl.classList.remove('on');}
-  renderDirect(pid);
-  // Send read receipt for unread messages
-  sendDirect(pid,{type:'read'});
+  renderDirect(pid);sendDirect(pid,{type:'read'});
   setTimeout(function(){document.getElementById('direct-ta').focus();},50);
 }
 
@@ -1057,20 +1073,21 @@ function renderDirect(pid){
   var grps=[];
   msgs.forEach(function(m){
     if(m.f==='sys'){h+='<div class="sysmsg">'+esc(m.t)+'</div>';return;}
-    if(m.f==='file'||m.f==='fi'){h+=fileBubHtml(m,m.f==='file');return;}
+    if(m.f==='file'||m.f==='fi'){h+=fileBubHtml(m,m.f==='file',false);return;}
+    if(m.f==='vm'||m.f==='vmi'){h+=vmBubHtml(m,m.f==='vm',false);return;}
     if(m.f==='fp'){h+=fileProgHtml(m);return;}
     var me=m.f==='m';
-    if(!grps.length||grps[grps.length-1].f!==m.f)grps.push({f:m.f,msgs:[m],read:m.read});
-    else{grps[grps.length-1].msgs.push(m);if(m.read)grps[grps.length-1].read=true;}
+    if(!grps.length||grps[grps.length-1].f!==m.f)grps.push({f:m.f,msgs:[m]});
+    else grps[grps.length-1].msgs.push(m);
   });
   grps.forEach(function(g){
     var me=g.f==='m';h+='<div class="mgroup">';
     if(!me&&c)h+='<div class="mhead"><div class="mav">'+esc(c.avatar)+'</div><span class="mname">'+esc(c.name)+'</span><span class="mtime">'+g.msgs[0].ts+'</span></div>';
     g.msgs.forEach(function(m){
-      h+='<div class="mrow '+(me?'me':'')+'"><div class="bub '+(me?'me':'')+'">'+esc(m.t)+'</div>';
-      // Read receipt for sent messages
-      if(me){h+='<div class="receipt'+(m.read?' read':'')+'">'+( m.read?'✓✓':'✓')+'</div>';}
-      h+='</div>';
+      h+='<div class="mrow '+(me?'me':'')+'"><div class="bub '+(me?'me':'')+'">'+linkify(m.t)+'</div>'
+        +(me?'<div class="receipt'+(m.read?' read':'')+'">'+( m.read?'✓✓':'✓')+'</div>':'')
+        +'<div class="react-btn" onclick="toggleReactPicker(\''+m.id+'\',false,this)">⚡</div></div>'
+        +reactionsHtml(m.reactions||{},m.id,false);
     });
     h+='</div>';
   });
@@ -1084,131 +1101,45 @@ function sendMsg(ctx){
   var isRoom=ctx==='room';
   var ta=document.getElementById(isRoom?'room-ta':'direct-ta');
   var t=ta.value.trim();if(!t)return;
+  var msgId=(isRoom?'rm_':'dm_')+Date.now()+'_'+Math.random().toString(36).slice(2,5);
   if(isRoom){
     if(!S.selRoom)return;var r=S.rooms[S.selRoom];if(!r)return;
-    r.convos.push({f:'t',from:S.peerId,name:S.name,av:S.avatar,t:t,ts:ts()});
+    r.convos.push({f:'t',from:S.peerId,name:S.name,av:S.avatar,t:t,ts:ts(),id:msgId,reactions:{}});
     ta.value='';ta.style.height='auto';renderRoom(S.selRoom);save();
-    broadcastRoom(S.selRoom,{type:'room-msg',roomId:S.selRoom,name:S.name,avatar:S.avatar,text:t});
+    broadcastRoom(S.selRoom,{type:'room-msg',roomId:S.selRoom,name:S.name,avatar:S.avatar,text:t,id:msgId});
   } else {
-    if(!S.selId)return;
-    if(!S.convos[S.selId])S.convos[S.selId]=[];
-    var msgId='m_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
-    S.convos[S.selId].push({f:'m',t:t,ts:ts(),id:msgId,read:false});
+    if(!S.selId)return;if(!S.convos[S.selId])S.convos[S.selId]=[];
+    S.convos[S.selId].push({f:'m',t:t,ts:ts(),id:msgId,read:false,reactions:{}});
     var c=getCt(S.selId);if(c)c.last=t;
     ta.value='';ta.style.height='auto';renderDirect(S.selId);renderList();save();
-    if(!sendDirect(S.selId,{type:'msg',text:t,id:msgId})){
-      S.convos[S.selId].push({f:'sys',t:'Not connected -- they may be offline'});renderDirect(S.selId);
-    }
+    if(!sendDirect(S.selId,{type:'msg',text:t,id:msgId})){S.convos[S.selId].push({f:'sys',t:'Not connected -- they may be offline'});renderDirect(S.selId);}
   }
 }
 
 // ── Voice rooms ───────────────────────────────────────────────────────────────
 async function startVoice(rid){
-  try{
-    S.localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,sampleRate:48000}});
-    if(!S.voiceStreams[rid])S.voiceStreams[rid]={};
-    S.voiceStreams[rid][S.peerId]='local';
-    var r=S.rooms[rid];if(r)Object.keys(r.members).forEach(function(pid){if(pid!==S.peerId)callRoomPeer(rid,pid);});
-    renderVoicePeers(rid);showToast('Joined voice room',2000);
-  }catch(e){showToast('Microphone access denied',3000);}
+  try{S.localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,sampleRate:48000}});if(!S.voiceStreams[rid])S.voiceStreams[rid]={};S.voiceStreams[rid][S.peerId]='local';var r=S.rooms[rid];if(r)Object.keys(r.members).forEach(function(pid){if(pid!==S.peerId)callRoomPeer(rid,pid);});renderVoicePeers(rid);showToast('Joined voice room',2000);}
+  catch(e){showToast('Microphone access denied',3000);}
 }
-
-function callRoomPeer(rid,pid){
-  if(!S.localStream)return;
-  var call=S.peer.call(pid,S.localStream,{metadata:{type:'rv',roomId:rid,name:S.name,avatar:S.avatar}});
-  if(!S.voiceConns[rid])S.voiceConns[rid]={};
-  S.voiceConns[rid][pid]=call;
-  call.on('stream',function(stream){if(!S.voiceStreams[rid])S.voiceStreams[rid]={};S.voiceStreams[rid][pid]=stream;playVA(rid,pid,stream);renderVoicePeers(rid);});
-  call.on('close',function(){if(S.voiceStreams[rid])delete S.voiceStreams[rid][pid];renderVoicePeers(rid);});
-}
-
-function handleRoomVoiceCall(call){
-  var meta=call.metadata,rid=meta.roomId;
-  call.answer(S.localStream||undefined);
-  if(!S.voiceConns[rid])S.voiceConns[rid]={};
-  S.voiceConns[rid][call.peer]=call;
-  call.on('stream',function(stream){
-    if(!S.voiceStreams[rid])S.voiceStreams[rid]={};S.voiceStreams[rid][call.peer]=stream;
-    playVA(rid,call.peer,stream);renderVoicePeers(rid);
-    if(!S.localStream){navigator.mediaDevices.getUserMedia({audio:true}).then(function(s){S.localStream=s;if(!S.voiceStreams[rid])S.voiceStreams[rid]={};S.voiceStreams[rid][S.peerId]='local';renderVoicePeers(rid);}).catch(function(){});}
-  });
-  call.on('close',function(){if(S.voiceStreams[rid])delete S.voiceStreams[rid][call.peer];renderVoicePeers(rid);});
-}
-
-function playVA(rid,pid,stream){
-  var id='vra-'+rid+'-'+pid,a=document.getElementById(id);
-  if(!a){a=document.createElement('audio');a.id=id;a.autoplay=true;document.body.appendChild(a);}
-  a.srcObject=stream;a.play().catch(function(){});
-}
-
-function renderVoicePeers(rid){
-  var area=document.getElementById('vr-peers');if(!area)return;
-  var r=S.rooms[rid];if(!r)return;
-  var streams=S.voiceStreams[rid]||{},peers={};
-  peers[S.peerId]={name:S.name,avatar:S.avatar,isMe:true};
-  Object.keys(streams).forEach(function(pid){if(pid!==S.peerId){var m=r.members[pid];if(m)peers[pid]={name:m.name,avatar:m.avatar};}});
-  var h='';
-  Object.keys(peers).forEach(function(pid){
-    var p=peers[pid],mu=pid===S.peerId&&S.voiceMuted;
-    h+='<div class="vrpeer"><div class="vrav'+(mu?' muted':'')+'">'+esc(p.avatar)+'</div><div class="vrpeername">'+esc(p.name)+(p.isMe?' (you)':'')+'</div></div>';
-  });
-  if(Object.keys(peers).length===1)h+='<div style="width:100%;text-align:center;padding-top:32px;font-size:13px;color:var(--tx3);font-family:var(--mono)">Waiting for others...<br><br><span style="color:var(--ac);cursor:pointer" onclick="shareRoomLink()">Share room invite link</span></div>';
-  area.innerHTML=h;
-}
-
-function toggleVoiceMute(){
-  S.voiceMuted=!S.voiceMuted;
-  if(S.localStream)S.localStream.getAudioTracks().forEach(function(t){t.enabled=!S.voiceMuted;});
-  var btn=document.getElementById('vr-mute-btn');
-  btn.textContent=S.voiceMuted?'🔇':'🎤';
-  btn.className='vrbtn '+(S.voiceMuted?'mu':'nm');
-  renderVoicePeers(S.selRoom);
-}
-
-function leaveVoice(){
-  if(S.localStream){S.localStream.getTracks().forEach(function(t){t.stop();});S.localStream=null;}
-  if(S.selRoom){
-    var vc=S.voiceConns[S.selRoom];if(vc)Object.values(vc).forEach(function(c){try{c.close();}catch(e){}});
-    S.voiceConns[S.selRoom]={};S.voiceStreams[S.selRoom]={};
-    var r=S.rooms[S.selRoom];if(r)Object.keys(r.members).forEach(function(pid){var a=document.getElementById('vra-'+S.selRoom+'-'+pid);if(a)a.remove();});
-  }
-  showRoomChat();
-}
-
-function shareRoomLink(){
-  if(!S.selRoom)return;var r=S.rooms[S.selRoom];if(!r)return;
-  var payload=btoa(encodeURIComponent(JSON.stringify({roomId:S.selRoom,name:r.name,type:r.type,hostId:S.peerId,hostName:S.name})));
-  var link=location.href.split('#')[0].split('?')[0]+'#room='+payload;
-  document.getElementById('room-inv-link').textContent=link;
-  document.getElementById('room-invite-modal').classList.add('on');
-}
-
-function copyRoomLink(){
-  var link=document.getElementById('room-inv-link').textContent;
-  navigator.clipboard&&navigator.clipboard.writeText(link);
-  var btn=document.getElementById('copy-room-btn');btn.textContent='✓ Copied';btn.classList.add('copied');
-  setTimeout(function(){btn.textContent='Copy';btn.classList.remove('copied');},2000);
-}
-
-function shareRoomLinkNative(){
-  var link=document.getElementById('room-inv-link').textContent;
-  var r=S.rooms[S.selRoom];var text='Join my room "'+(r?r.name:'Room')+'" on Flint:\n'+link;
-  if(navigator.share)navigator.share({title:'Flint room',text:text,url:link}).catch(function(){});
-  else{copyRoomLink();alert('Link copied!');}
-}
+function callRoomPeer(rid,pid){if(!S.localStream)return;var call=S.peer.call(pid,S.localStream,{metadata:{type:'rv',roomId:rid,name:S.name,avatar:S.avatar}});if(!S.voiceConns[rid])S.voiceConns[rid]={};S.voiceConns[rid][pid]=call;call.on('stream',function(stream){if(!S.voiceStreams[rid])S.voiceStreams[rid]={};S.voiceStreams[rid][pid]=stream;playVA(rid,pid,stream);renderVoicePeers(rid);});call.on('close',function(){if(S.voiceStreams[rid])delete S.voiceStreams[rid][pid];renderVoicePeers(rid);});}
+function handleRoomVoiceCall(call){var meta=call.metadata,rid=meta.roomId;call.answer(S.localStream||undefined);if(!S.voiceConns[rid])S.voiceConns[rid]={};S.voiceConns[rid][call.peer]=call;call.on('stream',function(stream){if(!S.voiceStreams[rid])S.voiceStreams[rid]={};S.voiceStreams[rid][call.peer]=stream;playVA(rid,call.peer,stream);renderVoicePeers(rid);if(!S.localStream){navigator.mediaDevices.getUserMedia({audio:true}).then(function(s){S.localStream=s;if(!S.voiceStreams[rid])S.voiceStreams[rid]={};S.voiceStreams[rid][S.peerId]='local';renderVoicePeers(rid);}).catch(function(){});}});call.on('close',function(){if(S.voiceStreams[rid])delete S.voiceStreams[rid][call.peer];renderVoicePeers(rid);});}
+function playVA(rid,pid,stream){var id='vra-'+rid+'-'+pid,a=document.getElementById(id);if(!a){a=document.createElement('audio');a.id=id;a.autoplay=true;document.body.appendChild(a);}a.srcObject=stream;a.play().catch(function(){});}
+function renderVoicePeers(rid){var area=document.getElementById('vr-peers');if(!area)return;var r=S.rooms[rid];if(!r)return;var streams=S.voiceStreams[rid]||{},peers={};peers[S.peerId]={name:S.name,avatar:S.avatar,isMe:true};Object.keys(streams).forEach(function(pid){if(pid!==S.peerId){var m=r.members[pid];if(m)peers[pid]={name:m.name,avatar:m.avatar};}});var h='';Object.keys(peers).forEach(function(pid){var p=peers[pid],mu=pid===S.peerId&&S.voiceMuted;h+='<div class="vrpeer"><div class="vrav'+(mu?' muted':'')+'">'+esc(p.avatar)+'</div><div class="vrpeername">'+esc(p.name)+(p.isMe?' (you)':'')+'</div></div>';});if(Object.keys(peers).length===1)h+='<div style="width:100%;text-align:center;padding-top:32px;font-size:13px;color:var(--tx3);font-family:var(--mono)">Waiting for others...<br><br><span style="color:var(--ac);cursor:pointer" onclick="shareRoomLink()">Share room invite link</span></div>';area.innerHTML=h;}
+function toggleVoiceMute(){S.voiceMuted=!S.voiceMuted;if(S.localStream)S.localStream.getAudioTracks().forEach(function(t){t.enabled=!S.voiceMuted;});var btn=document.getElementById('vr-mute-btn');btn.textContent=S.voiceMuted?'🔇':'🎤';btn.className='vrbtn '+(S.voiceMuted?'mu':'nm');renderVoicePeers(S.selRoom);}
+function leaveVoice(){if(S.localStream){S.localStream.getTracks().forEach(function(t){t.stop();});S.localStream=null;}if(S.selRoom){var vc=S.voiceConns[S.selRoom];if(vc)Object.values(vc).forEach(function(c){try{c.close();}catch(e){}});S.voiceConns[S.selRoom]={};S.voiceStreams[S.selRoom]={};var r=S.rooms[S.selRoom];if(r)Object.keys(r.members).forEach(function(pid){var a=document.getElementById('vra-'+S.selRoom+'-'+pid);if(a)a.remove();});}showRoomChat();}
+function shareRoomLink(){if(!S.selRoom)return;var r=S.rooms[S.selRoom];if(!r)return;var payload=btoa(encodeURIComponent(JSON.stringify({roomId:S.selRoom,name:r.name,type:r.type,hostId:S.peerId,hostName:S.name})));var link=location.href.split('#')[0].split('?')[0]+'#room='+payload;document.getElementById('room-inv-link').textContent=link;document.getElementById('room-invite-modal').classList.add('on');}
+function copyRoomLink(){var link=document.getElementById('room-inv-link').textContent;navigator.clipboard&&navigator.clipboard.writeText(link);var btn=document.getElementById('copy-room-btn');btn.textContent='✓ Copied';btn.classList.add('copied');setTimeout(function(){btn.textContent='Copy';btn.classList.remove('copied');},2000);}
+function shareRoomLinkNative(){var link=document.getElementById('room-inv-link').textContent;var r=S.rooms[S.selRoom];var text='Join my room "'+(r?r.name:'Room')+'" on Flint:\n'+link;if(navigator.share)navigator.share({title:'Flint room',text:text,url:link}).catch(function(){});else{copyRoomLink();alert('Link copied!');}}
 
 // ── File sharing ──────────────────────────────────────────────────────────────
 var CHUNK=65536;
-
 function sendFile(input,isRoom){
   if(!input.files||!input.files[0])return;
   var file=input.files[0],pid=isRoom?null:S.selId,rid=isRoom?S.selRoom:null;
-  if(isRoom&&!rid)return;if(!isRoom&&!pid)return;
-  input.value='';
-  var fid='f_'+Date.now();
-  var isImg=isImageFile(file.name);
+  if(isRoom&&!rid)return;if(!isRoom&&!pid)return;input.value='';
+  var fid='f_'+Date.now(),isImg=isImgFile(file.name);
   var pm={f:'fp',id:fid,name:file.name,size:file.size,progress:0,sending:true,ts:ts(),isImg:isImg};
-  if(isRoom)S.rooms[rid].convos.push(pm);else{if(!S.convos[pid])S.convos[pid]=[];S.convos[pid].push(pm);}
+  var msgs=isRoom?S.rooms[rid].convos:S.convos[pid]||(S.convos[pid]=[]);msgs.push(pm);
   if(isRoom)renderRoom(rid);else renderDirect(pid);
   var meta={type:(isRoom?'room-file-start':'file-start'),id:fid,name:file.name,size:file.size,mime:file.type,isImg:isImg};
   if(isRoom){meta.roomId=rid;broadcastRoom(rid,meta);}else sendDirect(pid,meta);
@@ -1217,65 +1148,25 @@ function sendFile(input,isRoom){
     var buf=e.target.result,total=buf.byteLength,offset=0;
     function next(){
       if(offset>=total){
-        var em={type:(isRoom?'room-file-end':'file-end'),id:fid};
-        if(isRoom){em.roomId=rid;broadcastRoom(rid,em);}else sendDirect(pid,em);
+        var em={type:(isRoom?'room-file-end':'file-end'),id:fid};if(isRoom){em.roomId=rid;broadcastRoom(rid,em);}else sendDirect(pid,em);
         var url=URL.createObjectURL(new Blob([buf],{type:file.type}));
-        var msgs=isRoom?S.rooms[rid].convos:S.convos[pid];
-        var idx=msgs.findIndex(function(m){return m.f==='fp'&&m.id===fid;});
-        if(idx>=0)msgs.splice(idx,1);
-        msgs.push({f:'file',name:file.name,size:file.size,url:url,ts:ts(),isImg:isImg});
+        var idx=msgs.findIndex(function(m){return m.f==='fp'&&m.id===fid;});if(idx>=0)msgs.splice(idx,1);
+        msgs.push({f:'file',id:fid,name:file.name,size:file.size,url:url,ts:ts(),isImg:isImg,reactions:{}});
         if(isRoom)renderRoom(rid);else{var c=getCt(pid);if(c)c.last=(isImg?'📷':'📎')+' '+file.name;renderDirect(pid);}
         renderList();save();showToast('File sent: '+file.name,2000);return;
       }
-      var chunk=buf.slice(offset,offset+CHUNK);
-      var cm={type:(isRoom?'room-file-chunk':'file-chunk'),id:fid,chunk:chunk};
-      if(isRoom){cm.roomId=rid;broadcastRoom(rid,cm);}else sendDirect(pid,cm);
-      offset+=chunk.byteLength;
-      var pct=Math.round((offset/total)*100);
-      var msgs=isRoom?S.rooms[rid].convos:S.convos[pid];
-      var pm2=msgs.find(function(m){return m.f==='fp'&&m.id===fid;});
-      if(pm2){pm2.progress=Math.min(pct,99);if(isRoom)renderRoom(rid);else renderDirect(pid);}
+      var chunk=buf.slice(offset,offset+CHUNK);var cm={type:(isRoom?'room-file-chunk':'file-chunk'),id:fid,chunk:chunk};if(isRoom){cm.roomId=rid;broadcastRoom(rid,cm);}else sendDirect(pid,cm);
+      offset+=chunk.byteLength;var pct=Math.round((offset/total)*100);var pm2=msgs.find(function(m){return m.f==='fp'&&m.id===fid;});if(pm2){pm2.progress=Math.min(pct,99);if(isRoom)renderRoom(rid);else renderDirect(pid);}
       setTimeout(next,10);
-    }
-    next();
-  };
-  reader.readAsArrayBuffer(file);
+    }next();
+  };reader.readAsArrayBuffer(file);
 }
 
 function onFileData(fromPid,data,isRoom,rid){
-  var fid=data.id;if(!fid)return;
-  var key=(isRoom?'r_':'')+fid;
-  if(data.type==='file-start'||data.type==='room-file-start'){
-    S.fileXfers[key]={name:data.name,size:data.size,mime:data.mime,chunks:[],received:0,isImg:data.isImg};
-    var pm={f:'fp',id:fid,name:data.name,size:data.size,progress:0,ts:ts(),isImg:data.isImg};
-    if(isRoom)S.rooms[rid].convos.push(pm);else{if(!S.convos[fromPid])S.convos[fromPid]=[];S.convos[fromPid].push(pm);}
-    if(isRoom)renderRoom(rid);else renderDirect(fromPid);
-  }
-  if(data.type==='file-chunk'||data.type==='room-file-chunk'){
-    var ft=S.fileXfers[key];if(!ft)return;
-    ft.chunks.push(data.chunk);ft.received+=data.chunk.byteLength;
-    var pct=Math.round((ft.received/ft.size)*100);
-    var msgs=isRoom?S.rooms[rid].convos:S.convos[fromPid];
-    var pm2=msgs&&msgs.find(function(m){return m.f==='fp'&&m.id===fid;});
-    if(pm2){pm2.progress=pct;if(isRoom)renderRoom(rid);else renderDirect(fromPid);}
-  }
-  if(data.type==='file-end'||data.type==='room-file-end'){
-    var ft=S.fileXfers[key];if(!ft)return;
-    var blob=new Blob(ft.chunks,{type:ft.mime||'application/octet-stream'});
-    var url=URL.createObjectURL(blob);delete S.fileXfers[key];
-    var msgs=isRoom?S.rooms[rid].convos:S.convos[fromPid];
-    var idx=msgs.findIndex(function(m){return m.f==='fp'&&m.id===fid;});
-    if(idx>=0)msgs.splice(idx,1);
-    msgs.push({f:'fi',name:ft.name,size:ft.size,url:url,ts:ts(),isImg:ft.isImg});
-    if(isRoom)renderRoom(rid);
-    else{var c=getCt(fromPid);if(c){c.last=(ft.isImg?'📷':'📎')+' '+ft.name;c.unread=(S.selId===fromPid)?0:(c.unread||0)+1;}renderDirect(fromPid);}
-    renderList();save();
-    showToast('File received: '+ft.name,3000);
-    // Notification for image
-    if(ft.isImg&&(S.selId!==fromPid||document.visibilityState!=='visible')){
-      sendNotification(getName(fromPid),'Sent an image: '+ft.name,'file-'+fromPid);
-    }
-  }
+  var fid=data.id;if(!fid)return;var key=(isRoom?'r_':'')+fid;
+  if(data.type==='file-start'||data.type==='room-file-start'){S.fileXfers[key]={name:data.name,size:data.size,mime:data.mime,chunks:[],received:0,isImg:data.isImg};var pm={f:'fp',id:fid,name:data.name,size:data.size,progress:0,ts:ts(),isImg:data.isImg};var msgs=isRoom?S.rooms[rid].convos:S.convos[fromPid]||(S.convos[fromPid]=[]);msgs.push(pm);if(isRoom)renderRoom(rid);else renderDirect(fromPid);}
+  if(data.type==='file-chunk'||data.type==='room-file-chunk'){var ft=S.fileXfers[key];if(!ft)return;ft.chunks.push(data.chunk);ft.received+=data.chunk.byteLength;var pct=Math.round((ft.received/ft.size)*100);var msgs=isRoom?S.rooms[rid].convos:S.convos[fromPid];var pm2=msgs&&msgs.find(function(m){return m.f==='fp'&&m.id===fid;});if(pm2){pm2.progress=pct;if(isRoom)renderRoom(rid);else renderDirect(fromPid);}}
+  if(data.type==='file-end'||data.type==='room-file-end'){var ft=S.fileXfers[key];if(!ft)return;var blob=new Blob(ft.chunks,{type:ft.mime||'application/octet-stream'});var url=URL.createObjectURL(blob);delete S.fileXfers[key];var msgs=isRoom?S.rooms[rid].convos:S.convos[fromPid];var idx=msgs.findIndex(function(m){return m.f==='fp'&&m.id===fid;});if(idx>=0)msgs.splice(idx,1);msgs.push({f:'fi',id:fid,name:ft.name,size:ft.size,url:url,ts:ts(),isImg:ft.isImg,reactions:{}});if(isRoom)renderRoom(rid);else{var c=getCt(fromPid);if(c){c.last=(ft.isImg?'📷':'📎')+' '+ft.name;c.unread=(S.selId===fromPid)?0:(c.unread||0)+1;}renderDirect(fromPid);}renderList();save();showToast('File received: '+ft.name,3000);}
 }
 
 function dlFile(url,name){var a=document.createElement('a');a.href=url;a.download=name;a.click();}
@@ -1283,12 +1174,7 @@ function fbytes(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1
 function ficon(n){var e=(n||'').split('.').pop().toLowerCase();var m={pdf:'📄',doc:'📝',docx:'📝',txt:'📝',xls:'📊',xlsx:'📊',csv:'📊',jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',webp:'🖼️',mp4:'🎬',mov:'🎬',mp3:'🎵',wav:'🎵',zip:'🗜️',rar:'🗜️',js:'💻',html:'💻',py:'💻'};return m[e]||'📁';}
 
 // ── Contacts & list ───────────────────────────────────────────────────────────
-function addContact(pid,name,avatar,status){
-  var c=getCt(pid);
-  if(c){c.name=name;c.avatar=avatar;c.status=status;}
-  else{S.contacts.unshift({id:pid,name:name,avatar:avatar,status:status,last:'Connected',unread:0});S.convos[pid]=S.convos[pid]||[];}
-  renderList();save();
-}
+function addContact(pid,name,avatar,status){var c=getCt(pid);if(c){c.name=name;c.avatar=avatar;c.status=status;}else{S.contacts.unshift({id:pid,name:name,avatar:avatar,status:status,last:'Connected',unread:0});S.convos[pid]=S.convos[pid]||[];}renderList();save();}
 function updStatus(pid,st){var c=getCt(pid);if(c){c.status=st;renderList();}}
 function getCt(pid){return S.contacts.find(function(x){return x.id===pid;});}
 function getName(pid){var c=getCt(pid);return c?c.name:pid.slice(0,10);}
@@ -1299,179 +1185,51 @@ function renderList(filter){
     var list=S.contacts.filter(function(c){return c.name.toLowerCase().includes(filter.toLowerCase());});
     if(!list.length){el.innerHTML='<div style="padding:18px 10px;text-align:center;font-size:12px;color:var(--tx3);line-height:2.2">No contacts yet.<br><span style="color:var(--ac);cursor:pointer" onclick="openAdd()">+ Get invite link</span></div>';return;}
     var on=list.filter(function(c){return c.status==='on';}),off=list.filter(function(c){return c.status!=='on';});
-    var h='';
-    if(on.length){h+='<div class="seclbl">Online</div>';on.forEach(function(c){h+=ctHtml(c);});}
-    if(off.length){h+='<div class="seclbl">Offline</div>';off.forEach(function(c){h+=ctHtml(c);});}
-    el.innerHTML=h;
+    var h='';if(on.length){h+='<div class="seclbl">Online</div>';on.forEach(function(c){h+=ctHtml(c);});}if(off.length){h+='<div class="seclbl">Offline</div>';off.forEach(function(c){h+=ctHtml(c);});}el.innerHTML=h;
   } else {
     var rlist=Object.values(S.rooms).filter(function(r){return r.name.toLowerCase().includes(filter.toLowerCase());});
     if(!rlist.length){el.innerHTML='<div style="padding:18px 10px;text-align:center;font-size:12px;color:var(--tx3);line-height:2.2">No rooms yet.<br><span style="color:var(--purple);cursor:pointer" onclick="openCreateRoom()">+ Create a room</span></div>';return;}
     var txt=rlist.filter(function(r){return r.type!=='voice';}),voi=rlist.filter(function(r){return r.type==='voice';});
-    var h='';
-    if(txt.length){h+='<div class="seclbl">Text Rooms</div>';txt.forEach(function(r){h+=roomHtml(r);});}
-    if(voi.length){h+='<div class="seclbl">Voice Rooms</div>';voi.forEach(function(r){h+=roomHtml(r);});}
-    el.innerHTML=h;
+    var h='';if(txt.length){h+='<div class="seclbl">Text Rooms</div>';txt.forEach(function(r){h+=roomHtml(r);});}if(voi.length){h+='<div class="seclbl">Voice Rooms</div>';voi.forEach(function(r){h+=roomHtml(r);});}el.innerHTML=h;
   }
 }
 
-function ctHtml(c){
-  return '<div class="ct '+(S.selId===c.id?'sel':'')+'" onclick="openConvo(\''+c.id+'\')">'
-    +'<div class="ctav"><span>'+esc(c.avatar)+'</span><div class="ctstatus '+(c.status==='on'?'on':'')+'"></div></div>'
-    +'<div class="cti"><div class="ctn">'+esc(c.name)+'</div><div class="cts">'+esc(c.last||'').slice(0,28)+'</div></div>'
-    +(c.unread?'<div class="ubadge">'+c.unread+'</div>':'')+'</div>';
-}
-
-function roomHtml(r){
-  var isV=r.type==='voice',n=Object.keys(r.members||{}).length;
-  return '<div class="ri '+(S.selRoom===r.id?'sel':'')+'" onclick="openRoom(\''+r.id+'\')">'
-    +'<div class="rico '+(isV?'voice':'')+'">'+( isV?'🔊':'#')+'</div>'
-    +'<div class="rinfo"><div class="rname">'+esc(r.name)+'</div><div class="rsub">'+(n>0?n+' online':'tap to open')+'</div></div>'
-    +(r.unread?'<div class="rbadge">'+r.unread+'</div>':'')+'</div>';
-}
-
+function ctHtml(c){return '<div class="ct '+(S.selId===c.id?'sel':'')+'" onclick="openConvo(\''+c.id+'\')">'+'<div class="ctav"><span>'+esc(c.avatar)+'</span><div class="ctstatus '+(c.status==='on'?'on':'')+'"></div></div>'+'<div class="cti"><div class="ctn">'+esc(c.name)+'</div><div class="cts">'+esc(c.last||'').slice(0,28)+'</div></div>'+(c.unread?'<div class="ubadge">'+c.unread+'</div>':'')+'</div>';}
+function roomHtml(r){var isV=r.type==='voice',n=Object.keys(r.members||{}).length;return '<div class="ri '+(S.selRoom===r.id?'sel':'')+'" onclick="openRoom(\''+r.id+'\')">'+'<div class="rico '+(isV?'voice':'')+'">'+( isV?'🔊':'#')+'</div>'+'<div class="rinfo"><div class="rname">'+esc(r.name)+'</div><div class="rsub">'+(n>0?n+' online':'tap to open')+'</div></div>'+(r.unread?'<div class="rbadge">'+r.unread+'</div>':'')+'</div>';}
 function filterList(v){renderList(v);}
 
 // ── Tabs & modals ─────────────────────────────────────────────────────────────
-function switchTab(tab){
-  S.activeTab=tab;
-  document.getElementById('tab-direct').className='sbtab'+(tab==='direct'?' on':'');
-  document.getElementById('tab-rooms').className='sbtab'+(tab==='rooms'?' on':'');
-  renderList();
-}
-
+function switchTab(tab){S.activeTab=tab;document.getElementById('tab-direct').className='sbtab'+(tab==='direct'?' on':'');document.getElementById('tab-rooms').className='sbtab'+(tab==='rooms'?' on':'');renderList();}
 function openAddForTab(){if(S.activeTab==='rooms')openCreateRoom();else openAdd();}
-
-function openAdd(){
-  document.getElementById('invite-modal').classList.add('on');
-  if(S.peerId){buildInvLink();document.getElementById('inv-link').textContent=S.invLink;}
-  else{
-    document.getElementById('inv-link').textContent='Connecting... (~5 seconds)';
-    var poll=setInterval(function(){if(S.peerId){clearInterval(poll);buildInvLink();document.getElementById('inv-link').textContent=S.invLink;}},500);
-    setTimeout(function(){clearInterval(poll);},15000);
-  }
-}
-
-function openCreateRoom(){
-  S.newRoomType='text';selType('text');
-  document.getElementById('room-name-inp').value='';
-  document.getElementById('room-modal').classList.add('on');
-  setTimeout(function(){document.getElementById('room-name-inp').focus();},100);
-}
-
+function openAdd(){document.getElementById('invite-modal').classList.add('on');if(S.peerId){buildInvLink();document.getElementById('inv-link').textContent=S.invLink;}else{document.getElementById('inv-link').textContent='Connecting... (~5 seconds)';var poll=setInterval(function(){if(S.peerId){clearInterval(poll);buildInvLink();document.getElementById('inv-link').textContent=S.invLink;}},500);setTimeout(function(){clearInterval(poll);},15000);}}
+function openCreateRoom(){S.newRoomType='text';selType('text');document.getElementById('room-name-inp').value='';document.getElementById('room-modal').classList.add('on');setTimeout(function(){document.getElementById('room-name-inp').focus();},100);}
 function openInfo(){document.getElementById('info-modal').classList.add('on');}
 function closeModal(id){document.getElementById(id).classList.remove('on');}
-
-['invite-modal','room-modal','info-modal','room-invite-modal'].forEach(function(id){
-  document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id);});
-});
-
-function swInvTab(t){
-  var lnk=t==='link';
-  document.getElementById('inv-panel-link').style.display=lnk?'block':'none';
-  document.getElementById('inv-panel-peer').style.display=lnk?'none':'block';
-  document.getElementById('inv-tab-link').className='tabbtn'+(lnk?' on':'');
-  document.getElementById('inv-tab-peer').className='tabbtn'+(!lnk?' on':'');
-}
-
-function copyInvLink(){
-  if(!S.invLink)return;
-  navigator.clipboard&&navigator.clipboard.writeText(S.invLink);
-  var btn=document.getElementById('copy-inv-btn');btn.textContent='✓ Copied';btn.classList.add('copied');
-  setTimeout(function(){btn.textContent='Copy';btn.classList.remove('copied');},2000);
-}
-
-function shareInvLink(){
-  if(!S.invLink)return;
-  var text=S.name+' wants to connect on Flint:\n'+S.invLink;
-  if(navigator.share)navigator.share({title:'Flint invite',text:text,url:S.invLink}).catch(function(){});
-  else{copyInvLink();alert('Link copied!');}
-}
-
-function copyPeerId(){
-  navigator.clipboard&&navigator.clipboard.writeText(S.peerId||'');
-  event.target.textContent='Copied';setTimeout(function(){event.target.textContent='Copy';},1500);
-}
-
-function connectToPeer(){
-  var pid=document.getElementById('peer-id-inp').value.trim(),nm=document.getElementById('peer-nm-inp').value.trim();
-  if(!pid)return;closeModal('invite-modal');connectTo(pid,nm||pid.slice(0,10),'⚡');
-}
+['invite-modal','room-modal','info-modal','room-invite-modal'].forEach(function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id);});});
+function swInvTab(t){var lnk=t==='link';document.getElementById('inv-panel-link').style.display=lnk?'block':'none';document.getElementById('inv-panel-peer').style.display=lnk?'none':'block';document.getElementById('inv-tab-link').className='tabbtn'+(lnk?' on':'');document.getElementById('inv-tab-peer').className='tabbtn'+(!lnk?' on':'');}
+function copyInvLink(){if(!S.invLink)return;navigator.clipboard&&navigator.clipboard.writeText(S.invLink);var btn=document.getElementById('copy-inv-btn');btn.textContent='✓ Copied';btn.classList.add('copied');setTimeout(function(){btn.textContent='Copy';btn.classList.remove('copied');},2000);}
+function shareInvLink(){if(!S.invLink)return;var text=S.name+' wants to connect on Flint:\n'+S.invLink;if(navigator.share)navigator.share({title:'Flint invite',text:text,url:S.invLink}).catch(function(){});else{copyInvLink();alert('Link copied!');}}
+function copyPeerId(){navigator.clipboard&&navigator.clipboard.writeText(S.peerId||'');event.target.textContent='Copied';setTimeout(function(){event.target.textContent='Copy';},1500);}
+function connectToPeer(){var pid=document.getElementById('peer-id-inp').value.trim(),nm=document.getElementById('peer-nm-inp').value.trim();if(!pid)return;closeModal('invite-modal');connectTo(pid,nm||pid.slice(0,10),'⚡');}
 
 // ── 1-1 Calls ─────────────────────────────────────────────────────────────────
-async function startCall(){
-  if(!S.selId)return;var c=getCt(S.selId);if(!c)return;
-  document.getElementById('call-st').textContent='Requesting microphone...';
-  document.getElementById('call-live').style.display='none';
-  document.getElementById('callscreen').classList.add('on');
-  try{
-    S.localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,sampleRate:48000}});
-    var call=S.peer.call(S.selId,S.localStream,{metadata:{name:S.name,avatar:S.avatar}});
-    S.calls[S.selId]=call;
-    call.on('stream',function(r){playAudio(r);document.getElementById('call-st').textContent='Connected · Encrypted';document.getElementById('call-live').style.display='flex';startCallTimer();});
-    call.on('close',endCall);call.on('error',endCall);
-    document.getElementById('call-st').textContent='Ringing...';
-  }catch(e){document.getElementById('call-st').textContent='Microphone denied';setTimeout(function(){document.getElementById('callscreen').classList.remove('on');},2500);}
-}
-
-function handleIncomingCall(call){
-  S.incomingCall=call;var meta=call.metadata||{},nm=meta.name||getName(call.peer),av=meta.avatar||'⚡';
-  document.getElementById('inc-nm').textContent=nm;document.getElementById('inc-av').textContent=av;
-  document.getElementById('call-av').textContent=av;document.getElementById('call-nm').textContent=nm;
-  document.getElementById('incoming').classList.add('show');
-  sendNotification(nm,'Incoming call','call-'+call.peer);
-  setTimeout(function(){document.getElementById('incoming').classList.remove('show');},30000);
-}
-
-async function acceptCall(){
-  document.getElementById('incoming').classList.remove('show');if(!S.incomingCall)return;
-  try{
-    S.localStream=await navigator.mediaDevices.getUserMedia({audio:true});
-    S.incomingCall.answer(S.localStream);
-    S.incomingCall.on('stream',function(r){playAudio(r);document.getElementById('call-st').textContent='Connected · Encrypted';document.getElementById('call-live').style.display='flex';document.getElementById('callscreen').classList.add('on');startCallTimer();});
-    S.incomingCall.on('close',endCall);
-  }catch(e){}
-}
-
-function playAudio(stream){
-  var a=document.getElementById('ra-direct');
-  if(!a){a=document.createElement('audio');a.id='ra-direct';a.autoplay=true;document.body.appendChild(a);}
-  a.srcObject=stream;a.play().catch(function(){});
-}
-
-function startCallTimer(){
-  S.callSecs=0;S.callTimer=setInterval(function(){S.callSecs++;document.getElementById('call-tm').textContent=Math.floor(S.callSecs/60)+':'+String(S.callSecs%60).padStart(2,'0');},1000);
-}
-
-function endCall(){
-  clearInterval(S.callTimer);document.getElementById('callscreen').classList.remove('on');document.getElementById('call-live').style.display='none';
-  if(S.localStream&&S.activeView!=='voice-room'){S.localStream.getTracks().forEach(function(t){t.stop();});S.localStream=null;}
-  Object.values(S.calls).forEach(function(c){try{c.close();}catch(e){}});S.calls={};S.incomingCall=null;
-}
-
-function toggleMute(){
-  S.muted=!S.muted;
-  if(S.localStream)S.localStream.getAudioTracks().forEach(function(t){t.enabled=!S.muted;});
-  var b=document.getElementById('mute-btn');b.textContent=S.muted?'🔇':'🎤';b.className='ccbtn '+(S.muted?'mu':'nm');
-}
+async function startCall(){if(!S.selId)return;var c=getCt(S.selId);if(!c)return;document.getElementById('call-st').textContent='Requesting microphone...';document.getElementById('call-live').style.display='none';document.getElementById('callscreen').classList.add('on');try{S.localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,sampleRate:48000}});var call=S.peer.call(S.selId,S.localStream,{metadata:{name:S.name,avatar:S.avatar}});S.calls[S.selId]=call;call.on('stream',function(r){playAudio(r);document.getElementById('call-st').textContent='Connected · Encrypted';document.getElementById('call-live').style.display='flex';startCallTimer();});call.on('close',endCall);call.on('error',endCall);document.getElementById('call-st').textContent='Ringing...';}catch(e){document.getElementById('call-st').textContent='Microphone denied';setTimeout(function(){document.getElementById('callscreen').classList.remove('on');},2500);}}
+function handleIncomingCall(call){S.incomingCall=call;var meta=call.metadata||{},nm=meta.name||getName(call.peer),av=meta.avatar||'⚡';document.getElementById('inc-nm').textContent=nm;document.getElementById('inc-av').textContent=av;document.getElementById('call-av').textContent=av;document.getElementById('call-nm').textContent=nm;document.getElementById('incoming').classList.add('show');sendNotification(nm,'Incoming call','call-'+call.peer);setTimeout(function(){document.getElementById('incoming').classList.remove('show');},30000);}
+async function acceptCall(){document.getElementById('incoming').classList.remove('show');if(!S.incomingCall)return;try{S.localStream=await navigator.mediaDevices.getUserMedia({audio:true});S.incomingCall.answer(S.localStream);S.incomingCall.on('stream',function(r){playAudio(r);document.getElementById('call-st').textContent='Connected · Encrypted';document.getElementById('call-live').style.display='flex';document.getElementById('callscreen').classList.add('on');startCallTimer();});S.incomingCall.on('close',endCall);}catch(e){}}
+function playAudio(stream){var a=document.getElementById('ra-direct');if(!a){a=document.createElement('audio');a.id='ra-direct';a.autoplay=true;document.body.appendChild(a);}a.srcObject=stream;a.play().catch(function(){});}
+function startCallTimer(){S.callSecs=0;S.callTimer=setInterval(function(){S.callSecs++;document.getElementById('call-tm').textContent=Math.floor(S.callSecs/60)+':'+String(S.callSecs%60).padStart(2,'0');},1000);}
+function endCall(){clearInterval(S.callTimer);document.getElementById('callscreen').classList.remove('on');document.getElementById('call-live').style.display='none';if(S.localStream&&S.activeView!=='voice-room'){S.localStream.getTracks().forEach(function(t){t.stop();});S.localStream=null;}Object.values(S.calls).forEach(function(c){try{c.close();}catch(e){}});S.calls={};S.incomingCall=null;}
+function toggleMute(){S.muted=!S.muted;if(S.localStream)S.localStream.getAudioTracks().forEach(function(t){t.enabled=!S.muted;});var b=document.getElementById('mute-btn');b.textContent=S.muted?'🔇':'🎤';b.className='ccbtn '+(S.muted?'mu':'nm');}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function hideAll(){
-  document.getElementById('empty-state').style.display='none';
-  document.getElementById('direct-chat').style.display='none';
-  document.getElementById('room-chat').style.display='none';
-  document.getElementById('voice-room').style.display='none';
-}
-
+function hideAll(){document.getElementById('empty-state').style.display='none';document.getElementById('direct-chat').style.display='none';document.getElementById('room-chat').style.display='none';document.getElementById('voice-room').style.display='none';}
 function show(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});document.getElementById(id).classList.add('active');}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function ts(){var d=new Date();return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');}
 function setNet(lbl,on){document.getElementById('nlbl').textContent=lbl;var d=document.getElementById('ndot');d.style.background=on?'var(--green)':'var(--tx3)';d.style.animation=on?'pulse 2.5s infinite':'none';d.className='ndot'+(on?'':' off');}
 function showToast(msg,dur){var t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('on');if(dur)setTimeout(function(){t.classList.remove('on');},dur);}
 
-if('serviceWorker' in navigator){
-  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});
-}
-
+if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
 runBoot();
 </script>
 </body>

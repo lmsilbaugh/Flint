@@ -1,4 +1,4 @@
-const CACHE = 'flint-v3';
+const CACHE = 'flint-v3.1';
 const ASSETS = [
   '/Flint/',
   '/Flint/index.html',

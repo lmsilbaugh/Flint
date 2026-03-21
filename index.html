@@ -113,6 +113,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .convav.room{border-radius:10px;font-family:var(--mono);font-size:13px;font-weight:600;color:var(--ac)}
 .convname{font-size:14px;font-weight:600;color:var(--tx)}
 .convid{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:1px}
+/* Typing indicator in header */
+.typing-lbl{font-family:var(--mono);font-size:10px;color:var(--ac);margin-top:1px;display:none}
+.typing-lbl.on{display:block}
 .hdacts{display:flex;gap:6px;align-items:center}
 .hdbtn{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r);font-family:var(--mono);font-size:11px;cursor:pointer;border:1px solid var(--bd3);background:var(--acd);color:var(--ac);transition:all .15s;letter-spacing:.04em}
 .hdbtn:hover{background:var(--acg)}
@@ -127,9 +130,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .mav{width:20px;height:20px;border-radius:50%;font-size:12px;display:flex;align-items:center;justify-content:center}
 .mname{font-size:12px;font-weight:500;color:var(--tx2)}
 .mtime{font-family:var(--mono);font-size:10px;color:var(--tx3)}
-.mrow{display:flex;margin-bottom:3px}.mrow.me{justify-content:flex-end}
+.mrow{display:flex;margin-bottom:3px;align-items:flex-end;gap:4px}.mrow.me{justify-content:flex-end}
 .bub{background:var(--bg2);border:1px solid var(--bd);border-radius:3px 10px 10px 10px;padding:8px 12px;max-width:70%;font-size:14px;line-height:1.5;word-break:break-word;color:var(--tx)}
 .bub.me{background:var(--acd);border-color:var(--bd3);color:var(--ac);border-radius:10px 3px 10px 10px;font-family:var(--mono);font-size:13px}
+/* Read receipts */
+.receipt{font-size:10px;color:var(--tx3);flex-shrink:0;margin-bottom:4px}
+.receipt.read{color:var(--ac)}
+/* File bubbles */
 .fbub{background:var(--bg2);border:1px solid var(--bd2);border-radius:10px;padding:10px 14px;max-width:280px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px}
 .fbub:hover{border-color:var(--ac);background:var(--acd)}.fbub.me{background:var(--acd);border-color:var(--bd3)}
 .ficon{font-size:24px;flex-shrink:0}
@@ -139,6 +146,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .fdl{font-family:var(--mono);font-size:10px;color:var(--ac);margin-top:3px}
 .fprog{height:3px;background:var(--bg4);border-radius:2px;margin-top:6px;overflow:hidden}
 .fprogbar{height:100%;background:var(--ac);border-radius:2px;transition:width .3s;width:0%}
+/* Image preview */
+.img-bub{max-width:280px;border-radius:10px;overflow:hidden;cursor:pointer;border:1px solid var(--bd2);transition:all .15s}
+.img-bub:hover{border-color:var(--ac)}
+.img-bub img{width:100%;display:block;max-height:200px;object-fit:cover}
+.img-bub-caption{padding:6px 10px;font-family:var(--mono);font-size:10px;color:var(--tx3);background:var(--bg2);display:flex;justify-content:space-between;align-items:center}
+/* Input */
 .inputwrap{padding:10px 16px 14px;flex-shrink:0;border-top:1px solid var(--bd)}
 .inputinner{display:flex;align-items:flex-end;gap:8px;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--r);padding:9px 12px;transition:border .2s,box-shadow .2s}
 .inputinner:focus-within{border-color:var(--ac);box-shadow:0 0 0 3px var(--acd)}
@@ -148,6 +161,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .sendbtn:hover{background:#72c8e0}
 .attbtn{width:30px;height:30px;border-radius:6px;background:var(--bg3);border:1px solid var(--bd2);cursor:pointer;color:var(--tx2);font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
 .attbtn:hover{color:var(--ac);border-color:var(--bd3)}
+/* Notification permission bar */
+.notif-bar{padding:8px 16px;background:var(--acd);border-bottom:1px solid var(--bd3);display:flex;align-items:center;gap:10px;font-size:12px;color:var(--tx2)}
+.notif-bar button{font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:4px;cursor:pointer;border:1px solid var(--bd3);background:var(--ac);color:#0d1117;white-space:nowrap}
+.notif-bar .notif-dismiss{background:transparent;color:var(--tx3);border-color:transparent}
 
 /* VOICE ROOM */
 .vrwrap{flex:1;display:flex;flex-direction:column;height:100%;min-height:0}
@@ -298,6 +315,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   </div>
 
   <div class="chatpane">
+    <!-- Notification permission bar -->
+    <div id="notif-bar" class="notif-bar" style="display:none">
+      <span style="flex:1">&#128276; Enable notifications to get alerted when messages arrive</span>
+      <button onclick="requestNotifPermission()">Enable</button>
+      <button class="notif-dismiss" onclick="dismissNotifBar()">&#10005;</button>
+    </div>
+
     <!-- Empty state -->
     <div class="emptystate" id="empty-state">
       <div class="emptyinner" style="padding-top:16px">
@@ -331,6 +355,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
         <div style="flex:1">
           <div class="convname" id="dch-name">&#8212;</div>
           <div class="convid" id="dch-id">&#8212;</div>
+          <div class="typing-lbl" id="dch-typing">typing...</div>
         </div>
         <div class="hdacts">
           <button class="hdbtn" onclick="startCall()">&#128222; Call</button>
@@ -342,7 +367,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
           <button class="attbtn" onclick="document.getElementById('direct-file').click()">&#128206;</button>
           <input type="file" id="direct-file" style="display:none" onchange="sendFile(this,false)">
           <textarea class="msgta" id="direct-ta" placeholder="Message..." rows="1"
-            onkeydown="handleKey(event,'direct')" oninput="autoR(this)"></textarea>
+            onkeydown="handleKey(event,'direct')" oninput="onTyping('direct',this)"></textarea>
           <button class="sendbtn" onclick="sendMsg('direct')">&#8629;</button>
         </div>
       </div>
@@ -355,6 +380,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
         <div style="flex:1">
           <div class="convname" id="rch-name">&#8212;</div>
           <div class="convid" id="rch-members">0 members online</div>
+          <div class="typing-lbl" id="rch-typing"></div>
         </div>
         <div class="hdacts">
           <button class="hdbtn voice" id="rch-voice-btn" onclick="joinVoice()">&#127908; Voice</button>
@@ -368,7 +394,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
           <button class="attbtn" onclick="document.getElementById('room-file').click()">&#128206;</button>
           <input type="file" id="room-file" style="display:none" onchange="sendFile(this,true)">
           <textarea class="msgta" id="room-ta" placeholder="Message room..." rows="1"
-            onkeydown="handleKey(event,'room')" oninput="autoR(this)"></textarea>
+            onkeydown="handleKey(event,'room')" oninput="onTyping('room',this)"></textarea>
           <button class="sendbtn" onclick="sendMsg('room')">&#8629;</button>
         </div>
       </div>
@@ -466,7 +492,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 <div class="ov" id="room-modal">
   <div class="modal">
     <div class="mtitle">Create a Room</div>
-    <div class="msub">Rooms are persistent group spaces for text chat and voice. Share the room link with anyone.</div>
+    <div class="msub">Rooms are persistent group spaces for text chat and voice.</div>
     <div class="mlbl">Room type</div>
     <div class="typerow">
       <div class="typeopt sel" id="type-text" onclick="selType('text')"><div class="typeicon">&#128172;</div><div class="typelbl">Text</div></div>
@@ -510,6 +536,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
       <div>&#128274;&nbsp;&nbsp;End-to-end encrypted voice, chat &amp; files</div>
       <div>&#128101;&nbsp;&nbsp;Group rooms &mdash; text chat + persistent voice</div>
       <div>&#128193;&nbsp;&nbsp;File sharing &mdash; no size limit, direct P2P</div>
+      <div>&#9997;&nbsp;&nbsp;Typing indicators &amp; read receipts</div>
       <div>&#127358;&nbsp;&nbsp;Free forever, no accounts required</div>
     </div>
     <div class="mlbl">Your Peer ID</div>
@@ -536,11 +563,18 @@ var S = {
   muted:false, voiceMuted:false,
   callTimer:null, callSecs:0,
   incomingCall:null, invLink:null,
-  fileXfers:{}, newRoomType:'text'
+  fileXfers:{}, newRoomType:'text',
+  // Typing state: pid -> timeout id
+  typingTimers:{},
+  // Read receipts: msgId -> 'sent'|'read'
+  receipts:{},
+  // Typing peers in rooms: rid -> Set of names
+  roomTyping:{}
 };
 
 var SK = 'flint_v2';
 
+// ── Storage ───────────────────────────────────────────────────────────────────
 function save() {
   try {
     localStorage.setItem(SK, JSON.stringify({
@@ -556,7 +590,7 @@ function cleanMsgs(obj) {
   var out={};
   Object.keys(obj).forEach(function(k){
     out[k]=(obj[k]||[]).filter(function(m){return m.f!=='fp';}).map(function(m){
-      return (m.f==='file'||m.f==='fi')?{f:m.f,name:m.name,size:m.size,ts:m.ts,saved:true}:m;
+      return (m.f==='file'||m.f==='fi')?{f:m.f,name:m.name,size:m.size,ts:m.ts,saved:true,isImg:m.isImg}:m;
     });
   });
   return out;
@@ -581,13 +615,13 @@ function clearAll(){localStorage.removeItem(SK);location.reload();}
 var LOGO = '  ______ _ _       _   \n |  ____| (_)     | |  \n | |__  | |_ _ __ | |_ \n |  __| | | | \'_ \\| __|\n | |    | | | | | | |_ \n |_|    |_|_|_| |_|\\__|';
 
 var BOOT = [
-  {t:'b', s:'Flint v3.0 -- Direct / Group Rooms / Voice'},
+  {t:'b', s:'Flint v3.1 -- Direct / Group Rooms / Voice'},
   {t:'d', s:'--------------------------------------------'},
   {t:'',  s:'Loading P2P engine...'},
   {t:'d', s:'  [+] PeerJS ready -- WebRTC signaling'},
-  {t:'d', s:'  [+] Mesh networking for group rooms'},
-  {t:'d', s:'  [+] Persistent voice rooms enabled'},
-  {t:'d', s:'  [+] Local storage -- history persists'},
+  {t:'d', s:'  [+] Typing indicators + read receipts'},
+  {t:'d', s:'  [+] Image previews enabled'},
+  {t:'d', s:'  [+] Push notifications ready'},
   {t:'',  s:''},
   {t:'w', s:'  No server. No accounts. No cost. Ever.'},
   {t:'',  s:''},
@@ -611,9 +645,9 @@ function runBoot() {
 function checkHash() {
   var h=location.hash;
   if(h.startsWith('#join=')){
-    try{var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));sessionStorage.setItem('fi',JSON.stringify(d));history.replaceState(null,'',location.pathname);bootNote('Invite from '+(d.name||'someone')+' -- enter your name to connect.');}catch(e){}
+    try{var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));sessionStorage.setItem('fi',JSON.stringify(d));history.replaceState(null,'',location.pathname);bootNote('Invite from '+(d.name||'someone')+' -- enter your name.');}catch(e){}
   } else if(h.startsWith('#room=')){
-    try{var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));sessionStorage.setItem('fr',JSON.stringify(d));history.replaceState(null,'',location.pathname);bootNote('Room invite: "'+d.name+'" -- enter your name to join.');}catch(e){}
+    try{var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));sessionStorage.setItem('fr',JSON.stringify(d));history.replaceState(null,'',location.pathname);bootNote('Room invite: "'+d.name+'" -- enter your name.');}catch(e){}
   }
 }
 
@@ -630,6 +664,39 @@ function launchApp(){
   document.getElementById('myav').textContent=S.avatar;
   document.getElementById('mynm').textContent=S.name;
   show('app');renderList();initPeer();
+  checkNotifPermission();
+}
+
+// ── Push notifications ────────────────────────────────────────────────────────
+function checkNotifPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    setTimeout(function(){document.getElementById('notif-bar').style.display='flex';}, 3000);
+  }
+}
+
+function requestNotifPermission() {
+  dismissNotifBar();
+  Notification.requestPermission().then(function(result){
+    if(result==='granted') showToast('Notifications enabled!', 2000);
+  });
+}
+
+function dismissNotifBar(){document.getElementById('notif-bar').style.display='none';}
+
+function sendNotification(title, body, tag) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (document.visibilityState === 'visible') return; // Don't notify if app is open
+  try {
+    new Notification(title, {body:body, tag:tag||'flint', icon:'icon-192.png', badge:'icon-192.png'});
+  } catch(e) {
+    // Fallback via service worker
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready.then(function(reg){
+        reg.showNotification(title, {body:body, tag:tag||'flint', icon:'icon-192.png'});
+      });
+    }
+  }
 }
 
 // ── PeerJS ────────────────────────────────────────────────────────────────────
@@ -681,23 +748,96 @@ function wireConn(conn,name,avatar){
     addContact(pid,nm,av,'on');conn.send({type:'hello',name:S.name,avatar:S.avatar});showToast('Connected to '+nm+'!',3000);
   });
   conn.on('data',function(d){onDirectData(pid,d);});
-  conn.on('close',function(){updStatus(pid,'off');save();});
-  conn.on('error',function(){updStatus(pid,'off');});
+  conn.on('close',function(){updStatus(pid,'off');clearTyping(pid);save();});
+  conn.on('error',function(){updStatus(pid,'off');clearTyping(pid);});
 }
 
 function onDirectData(pid,data){
   if(!data||!data.type)return;
-  if(data.type==='hello')addContact(pid,data.name||getName(pid),data.avatar||'⚡','on');
+  if(data.type==='hello') addContact(pid,data.name||getName(pid),data.avatar||'⚡','on');
+
   if(data.type==='msg'){
     if(!S.convos[pid])S.convos[pid]=[];
-    S.convos[pid].push({f:'t',t:data.text,ts:ts()});
-    var c=getCt(pid);if(c){c.last=data.text;c.unread=(S.selId===pid)?0:(c.unread||0)+1;}
+    var msgId='m_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+    S.convos[pid].push({f:'t',t:data.text,ts:ts(),id:msgId});
+    var c=getCt(pid);
+    if(c){c.last=data.text;c.unread=(S.selId===pid)?0:(c.unread||0)+1;}
+    // Send read receipt if conversation is open
+    if(S.selId===pid){sendDirect(pid,{type:'read',msgId:msgId});}
     renderList();if(S.selId===pid)renderDirect(pid);save();
+    clearTyping(pid);
+    // Push notification
+    if(S.selId!==pid||document.visibilityState!=='visible'){
+      sendNotification(getName(pid), data.text, 'msg-'+pid);
+    }
   }
+
+  if(data.type==='typing'){
+    if(S.selId===pid){
+      showTyping('dch-typing', getName(pid));
+      clearTimeout(S.typingTimers[pid]);
+      S.typingTimers[pid]=setTimeout(function(){clearTyping(pid);},3000);
+    }
+  }
+
+  if(data.type==='read'){
+    // Mark our sent messages as read
+    var msgs=S.convos[pid]||[];
+    msgs.forEach(function(m){if(m.f==='m')m.read=true;});
+    if(S.selId===pid)renderDirect(pid);
+  }
+
   onFileData(pid,data,false,null);
 }
 
 function sendDirect(pid,obj){var c=S.conns[pid];if(c&&c.open){c.send(obj);return true;}return false;}
+
+// ── Typing indicators ─────────────────────────────────────────────────────────
+var TYPING_THROTTLE = 2000;
+var lastTypingSent = {};
+
+function onTyping(ctx, ta) {
+  autoR(ta);
+  var now = Date.now();
+  if(ctx==='direct' && S.selId){
+    if(!lastTypingSent[S.selId]||now-lastTypingSent[S.selId]>TYPING_THROTTLE){
+      sendDirect(S.selId,{type:'typing',name:S.name});
+      lastTypingSent[S.selId]=now;
+    }
+  } else if(ctx==='room' && S.selRoom){
+    if(!lastTypingSent[S.selRoom]||now-lastTypingSent[S.selRoom]>TYPING_THROTTLE){
+      broadcastRoom(S.selRoom,{type:'room-typing',roomId:S.selRoom,name:S.name});
+      lastTypingSent[S.selRoom]=now;
+    }
+  }
+}
+
+function showTyping(elId, name) {
+  var el=document.getElementById(elId);
+  if(el){el.textContent=name+' is typing...';el.classList.add('on');}
+}
+
+function clearTyping(pid){
+  clearTimeout(S.typingTimers[pid]);
+  delete S.typingTimers[pid];
+  if(S.selId===pid){
+    var el=document.getElementById('dch-typing');
+    if(el){el.textContent='';el.classList.remove('on');}
+  }
+}
+
+function clearRoomTyping(rid,name){
+  if(!S.roomTyping[rid])return;
+  S.roomTyping[rid].delete(name);
+  if(S.selRoom===rid)updateRoomTypingLabel(rid);
+}
+
+function updateRoomTypingLabel(rid){
+  var el=document.getElementById('rch-typing');if(!el)return;
+  var names=S.roomTyping[rid]?Array.from(S.roomTyping[rid]).filter(function(n){return n!==S.name;}):[];
+  if(names.length===0){el.textContent='';el.classList.remove('on');}
+  else{el.textContent=names.join(', ')+(names.length===1?' is':' are')+' typing...';el.classList.add('on');}
+}
 
 // ── Room system ───────────────────────────────────────────────────────────────
 function createRoom(){
@@ -755,6 +895,7 @@ function handleRoomConn(conn){
 function onRoomData(fromPid,data){
   if(!data||!data.type||!data.roomId)return;
   var rid=data.roomId,r=S.rooms[rid];if(!r)return;
+
   if(data.type==='room-hello'){r.members[fromPid]={name:data.name||fromPid.slice(0,10),avatar:data.avatar||'⚡'};updRoomHd(rid);save();}
   if(data.type==='room-req-peers'){
     var peers=Object.keys(r.members).filter(function(p){return p!==fromPid&&p!==S.peerId;});
@@ -766,7 +907,24 @@ function onRoomData(fromPid,data){
     if(data.members)Object.keys(data.members).forEach(function(pid){if(pid!==S.peerId)r.members[pid]=data.members[pid];});
     updRoomHd(rid);
   }
-  if(data.type==='room-msg'){r.convos.push({f:'t',from:fromPid,name:data.name,av:data.avatar,t:data.text,ts:ts()});if(S.selRoom!==rid)r.unread=(r.unread||0)+1;renderList();if(S.selRoom===rid)renderRoom(rid);save();}
+  if(data.type==='room-msg'){
+    r.convos.push({f:'t',from:fromPid,name:data.name,av:data.avatar,t:data.text,ts:ts()});
+    if(S.selRoom!==rid)r.unread=(r.unread||0)+1;
+    renderList();if(S.selRoom===rid)renderRoom(rid);save();
+    if(S.roomTyping[rid])clearRoomTyping(rid,data.name);
+    // Push notification
+    if(S.selRoom!==rid||document.visibilityState!=='visible'){
+      sendNotification('#'+r.name, data.name+': '+data.text, 'room-'+rid);
+    }
+  }
+  if(data.type==='room-typing'){
+    if(!S.roomTyping[rid])S.roomTyping[rid]=new Set();
+    S.roomTyping[rid].add(data.name);
+    if(S.selRoom===rid)updateRoomTypingLabel(rid);
+    var key='rtyp_'+rid+'_'+data.name;
+    clearTimeout(S.typingTimers[key]);
+    S.typingTimers[key]=setTimeout(function(){clearRoomTyping(rid,data.name);},3000);
+  }
   if(data.type==='room-file-start'||data.type==='room-file-chunk'||data.type==='room-file-end')onFileData(fromPid,data,true,rid);
 }
 
@@ -775,13 +933,12 @@ function broadcastRoom(rid,obj){var rc=S.roomConns[rid];if(!rc)return;Object.val
 // ── Leave room ────────────────────────────────────────────────────────────────
 function leaveRoom(){
   if(!S.selRoom)return;
-  var rid=S.selRoom;
-  var rname=S.rooms[rid]?S.rooms[rid].name:'room';
+  var rid=S.selRoom,rname=S.rooms[rid]?S.rooms[rid].name:'room';
   if(S.localStream){S.localStream.getTracks().forEach(function(t){t.stop();});S.localStream=null;}
   var vc=S.voiceConns[rid];if(vc)Object.values(vc).forEach(function(c){try{c.close();}catch(e){}});
   var rc=S.roomConns[rid];if(rc)Object.values(rc).forEach(function(c){try{c.close();}catch(e){}});
   document.querySelectorAll('[id^="vra-'+rid+'-"]').forEach(function(el){el.remove();});
-  delete S.rooms[rid];delete S.roomConns[rid];delete S.voiceConns[rid];delete S.voiceStreams[rid];
+  delete S.rooms[rid];delete S.roomConns[rid];delete S.voiceConns[rid];delete S.voiceStreams[rid];delete S.roomTyping[rid];
   S.selRoom=null;S.activeView=null;
   hideAll();document.getElementById('empty-state').style.display='flex';
   renderList();save();showToast('Left "'+rname+'"',2000);
@@ -796,7 +953,7 @@ function showRoomChat(){
   document.getElementById('room-chat').style.display='flex';
   document.getElementById('rch-av').textContent='#';
   document.getElementById('rch-name').textContent=r.name;
-  updRoomHd(S.selRoom);renderRoom(S.selRoom);
+  updRoomHd(S.selRoom);renderRoom(S.selRoom);updateRoomTypingLabel(S.selRoom);
   var vbtn=document.getElementById('rch-voice-btn');if(vbtn)vbtn.style.display=(r.type==='text')?'none':'flex';
 }
 
@@ -821,14 +978,47 @@ function updRoomHd(rid){
   document.getElementById('rch-members').textContent=n+' member'+(n!==1?'s':'')+' online';
 }
 
+// ── Render helpers ────────────────────────────────────────────────────────────
+function isImageFile(name){return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(name||'');}
+
+function imgBubHtml(m, isMe){
+  var urlAttr = m.url ? ('onclick="dlFile(\''+m.url+'\',\''+esc(m.name)+'\')" ') : '';
+  return '<div class="mrow '+(isMe?'me':'')+'" style="margin-bottom:8px">'
+    +'<div class="img-bub" '+urlAttr+'>'
+    +(m.url ? '<img src="'+m.url+'" alt="'+esc(m.name)+'" loading="lazy">' : '<div style="padding:20px;text-align:center;color:var(--tx3);font-size:12px">Image expired</div>')
+    +'<div class="img-bub-caption"><span>'+esc(m.name)+'</span><span>'+fbytes(m.size)+'</span></div>'
+    +'</div></div>';
+}
+
+function fileBubHtml(m, isMe){
+  if(m.isImg) return imgBubHtml(m, isMe);
+  return '<div class="mrow '+(isMe?'me':'')+'" style="margin-bottom:8px">'
+    +'<div class="fbub '+(isMe?'me':'')+'" '+(m.url?'onclick="dlFile(\''+m.url+'\',\''+esc(m.name)+'\')"':'')+' >'
+    +'<div class="ficon">'+ficon(m.name)+'</div>'
+    +'<div class="finfo"><div class="fname">'+esc(m.name)+'</div>'
+    +'<div class="fsize">'+fbytes(m.size)+'</div>'
+    +(m.saved&&!m.url?'<div class="fdl" style="color:var(--tx3)">File expired</div>':'<div class="fdl">Click to download</div>')
+    +'</div></div></div>';
+}
+
+function fileProgHtml(m){
+  return '<div class="mrow '+(m.sending?'me':'')+'" style="margin-bottom:8px">'
+    +'<div class="fbub '+(m.sending?'me':'')+'">'
+    +'<div class="ficon">'+ficon(m.name)+'</div>'
+    +'<div class="finfo"><div class="fname">'+esc(m.name)+'</div>'
+    +'<div class="fsize">'+fbytes(m.size)+' · '+(m.sending?'Sending':'Receiving')+' '+m.progress+'%</div>'
+    +'<div class="fprog"><div class="fprogbar" style="width:'+m.progress+'%"></div></div>'
+    +'</div></div></div>';
+}
+
 function renderRoom(rid){
   var area=document.getElementById('room-msgs');var r=S.rooms[rid];if(!r)return;
   var msgs=r.convos||[];
-  var h='<div class="sysmsg">Group room &middot; '+esc(r.name)+' &middot; End-to-end encrypted</div>';
+  var h='<div class="sysmsg">Group room · '+esc(r.name)+' · End-to-end encrypted</div>';
   var grps=[];
   msgs.forEach(function(m){
     if(m.f==='sys'){h+='<div class="sysmsg">'+esc(m.t)+'</div>';return;}
-    if(m.f==='file'||m.f==='fi'){var me=m.f==='file';h+=fileBubHtml(m,me);return;}
+    if(m.f==='file'||m.f==='fi'){h+=fileBubHtml(m,m.f==='file');return;}
     if(m.f==='fp'){h+=fileProgHtml(m);return;}
     var me=m.from===S.peerId;
     if(!grps.length||grps[grps.length-1].from!==m.from)grps.push({from:m.from,name:m.name,av:m.av,msgs:[m]});
@@ -853,48 +1043,38 @@ function openConvo(pid){
   document.getElementById('dch-id').textContent=pid;
   document.getElementById('call-av').textContent=c?c.avatar:'⚡';
   document.getElementById('call-nm').textContent=c?c.name:'—';
-  renderDirect(pid);setTimeout(function(){document.getElementById('direct-ta').focus();},50);
+  // Clear typing indicator when opening convo
+  var tl=document.getElementById('dch-typing');if(tl){tl.textContent='';tl.classList.remove('on');}
+  renderDirect(pid);
+  // Send read receipt for unread messages
+  sendDirect(pid,{type:'read'});
+  setTimeout(function(){document.getElementById('direct-ta').focus();},50);
 }
 
 function renderDirect(pid){
   var area=document.getElementById('direct-msgs');var msgs=S.convos[pid]||[];var c=getCt(pid);
-  var h='<div class="sysmsg">End-to-end encrypted &middot; '+(c&&c.status==='on'?'<span style="color:var(--green)">Live P2P</span>':'Offline')+' &middot; '+esc(pid).slice(0,16)+'...</div>';
+  var h='<div class="sysmsg">End-to-end encrypted · '+(c&&c.status==='on'?'<span style="color:var(--green)">Live P2P</span>':'Offline')+' · '+esc(pid).slice(0,16)+'...</div>';
   var grps=[];
   msgs.forEach(function(m){
     if(m.f==='sys'){h+='<div class="sysmsg">'+esc(m.t)+'</div>';return;}
-    if(m.f==='file'||m.f==='fi'){var me=m.f==='file';h+=fileBubHtml(m,me);return;}
+    if(m.f==='file'||m.f==='fi'){h+=fileBubHtml(m,m.f==='file');return;}
     if(m.f==='fp'){h+=fileProgHtml(m);return;}
     var me=m.f==='m';
-    if(!grps.length||grps[grps.length-1].f!==m.f)grps.push({f:m.f,msgs:[m]});
-    else grps[grps.length-1].msgs.push(m);
+    if(!grps.length||grps[grps.length-1].f!==m.f)grps.push({f:m.f,msgs:[m],read:m.read});
+    else{grps[grps.length-1].msgs.push(m);if(m.read)grps[grps.length-1].read=true;}
   });
   grps.forEach(function(g){
     var me=g.f==='m';h+='<div class="mgroup">';
     if(!me&&c)h+='<div class="mhead"><div class="mav">'+esc(c.avatar)+'</div><span class="mname">'+esc(c.name)+'</span><span class="mtime">'+g.msgs[0].ts+'</span></div>';
-    g.msgs.forEach(function(m){h+='<div class="mrow '+(me?'me':'')+'"><div class="bub '+(me?'me':'')+'">'+esc(m.t)+'</div></div>';});
+    g.msgs.forEach(function(m){
+      h+='<div class="mrow '+(me?'me':'')+'"><div class="bub '+(me?'me':'')+'">'+esc(m.t)+'</div>';
+      // Read receipt for sent messages
+      if(me){h+='<div class="receipt'+(m.read?' read':'')+'">'+( m.read?'✓✓':'✓')+'</div>';}
+      h+='</div>';
+    });
     h+='</div>';
   });
   area.innerHTML=h;area.scrollTop=area.scrollHeight;
-}
-
-function fileBubHtml(m,isMe){
-  return '<div class="mrow '+(isMe?'me':'')+'" style="margin-bottom:8px">'
-    +'<div class="fbub '+(isMe?'me':'')+'" onclick="dlFile(\''+m.url+'\',\''+esc(m.name)+'\')">'
-    +'<div class="ficon">'+ficon(m.name)+'</div>'
-    +'<div class="finfo"><div class="fname">'+esc(m.name)+'</div>'
-    +'<div class="fsize">'+fbytes(m.size)+'</div>'
-    +(m.saved?'<div class="fdl" style="color:var(--tx3)">File expired</div>':'<div class="fdl">Click to download</div>')
-    +'</div></div></div>';
-}
-
-function fileProgHtml(m){
-  return '<div class="mrow '+(m.sending?'me':'')+'" style="margin-bottom:8px">'
-    +'<div class="fbub '+(m.sending?'me':'')+'">'
-    +'<div class="ficon">'+ficon(m.name)+'</div>'
-    +'<div class="finfo"><div class="fname">'+esc(m.name)+'</div>'
-    +'<div class="fsize">'+fbytes(m.size)+' · '+(m.sending?'Sending':'Receiving')+' '+m.progress+'%</div>'
-    +'<div class="fprog"><div class="fprogbar" style="width:'+m.progress+'%"></div></div>'
-    +'</div></div></div>';
 }
 
 function handleKey(e,ctx){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg(ctx);}}
@@ -912,10 +1092,13 @@ function sendMsg(ctx){
   } else {
     if(!S.selId)return;
     if(!S.convos[S.selId])S.convos[S.selId]=[];
-    S.convos[S.selId].push({f:'m',t:t,ts:ts()});
+    var msgId='m_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+    S.convos[S.selId].push({f:'m',t:t,ts:ts(),id:msgId,read:false});
     var c=getCt(S.selId);if(c)c.last=t;
     ta.value='';ta.style.height='auto';renderDirect(S.selId);renderList();save();
-    if(!sendDirect(S.selId,{type:'msg',text:t})){S.convos[S.selId].push({f:'sys',t:'Not connected -- they may be offline'});renderDirect(S.selId);}
+    if(!sendDirect(S.selId,{type:'msg',text:t,id:msgId})){
+      S.convos[S.selId].push({f:'sys',t:'Not connected -- they may be offline'});renderDirect(S.selId);
+    }
   }
 }
 
@@ -1023,10 +1206,11 @@ function sendFile(input,isRoom){
   if(isRoom&&!rid)return;if(!isRoom&&!pid)return;
   input.value='';
   var fid='f_'+Date.now();
-  var pm={f:'fp',id:fid,name:file.name,size:file.size,progress:0,sending:true,ts:ts()};
+  var isImg=isImageFile(file.name);
+  var pm={f:'fp',id:fid,name:file.name,size:file.size,progress:0,sending:true,ts:ts(),isImg:isImg};
   if(isRoom)S.rooms[rid].convos.push(pm);else{if(!S.convos[pid])S.convos[pid]=[];S.convos[pid].push(pm);}
   if(isRoom)renderRoom(rid);else renderDirect(pid);
-  var meta={type:(isRoom?'room-file-start':'file-start'),id:fid,name:file.name,size:file.size,mime:file.type};
+  var meta={type:(isRoom?'room-file-start':'file-start'),id:fid,name:file.name,size:file.size,mime:file.type,isImg:isImg};
   if(isRoom){meta.roomId=rid;broadcastRoom(rid,meta);}else sendDirect(pid,meta);
   var reader=new FileReader();
   reader.onload=function(e){
@@ -1039,8 +1223,8 @@ function sendFile(input,isRoom){
         var msgs=isRoom?S.rooms[rid].convos:S.convos[pid];
         var idx=msgs.findIndex(function(m){return m.f==='fp'&&m.id===fid;});
         if(idx>=0)msgs.splice(idx,1);
-        msgs.push({f:'file',name:file.name,size:file.size,url:url,ts:ts()});
-        if(isRoom)renderRoom(rid);else{var c=getCt(pid);if(c)c.last='📎 '+file.name;renderDirect(pid);}
+        msgs.push({f:'file',name:file.name,size:file.size,url:url,ts:ts(),isImg:isImg});
+        if(isRoom)renderRoom(rid);else{var c=getCt(pid);if(c)c.last=(isImg?'📷':'📎')+' '+file.name;renderDirect(pid);}
         renderList();save();showToast('File sent: '+file.name,2000);return;
       }
       var chunk=buf.slice(offset,offset+CHUNK);
@@ -1062,8 +1246,8 @@ function onFileData(fromPid,data,isRoom,rid){
   var fid=data.id;if(!fid)return;
   var key=(isRoom?'r_':'')+fid;
   if(data.type==='file-start'||data.type==='room-file-start'){
-    S.fileXfers[key]={name:data.name,size:data.size,mime:data.mime,chunks:[],received:0};
-    var pm={f:'fp',id:fid,name:data.name,size:data.size,progress:0,ts:ts()};
+    S.fileXfers[key]={name:data.name,size:data.size,mime:data.mime,chunks:[],received:0,isImg:data.isImg};
+    var pm={f:'fp',id:fid,name:data.name,size:data.size,progress:0,ts:ts(),isImg:data.isImg};
     if(isRoom)S.rooms[rid].convos.push(pm);else{if(!S.convos[fromPid])S.convos[fromPid]=[];S.convos[fromPid].push(pm);}
     if(isRoom)renderRoom(rid);else renderDirect(fromPid);
   }
@@ -1082,10 +1266,15 @@ function onFileData(fromPid,data,isRoom,rid){
     var msgs=isRoom?S.rooms[rid].convos:S.convos[fromPid];
     var idx=msgs.findIndex(function(m){return m.f==='fp'&&m.id===fid;});
     if(idx>=0)msgs.splice(idx,1);
-    msgs.push({f:'fi',name:ft.name,size:ft.size,url:url,ts:ts()});
+    msgs.push({f:'fi',name:ft.name,size:ft.size,url:url,ts:ts(),isImg:ft.isImg});
     if(isRoom)renderRoom(rid);
-    else{var c=getCt(fromPid);if(c){c.last='📎 '+ft.name;c.unread=(S.selId===fromPid)?0:(c.unread||0)+1;}renderDirect(fromPid);}
-    renderList();save();showToast('File received: '+ft.name,3000);
+    else{var c=getCt(fromPid);if(c){c.last=(ft.isImg?'📷':'📎')+' '+ft.name;c.unread=(S.selId===fromPid)?0:(c.unread||0)+1;}renderDirect(fromPid);}
+    renderList();save();
+    showToast('File received: '+ft.name,3000);
+    // Notification for image
+    if(ft.isImg&&(S.selId!==fromPid||document.visibilityState!=='visible')){
+      sendNotification(getName(fromPid),'Sent an image: '+ft.name,'file-'+fromPid);
+    }
   }
 }
 
@@ -1229,6 +1418,7 @@ function handleIncomingCall(call){
   document.getElementById('inc-nm').textContent=nm;document.getElementById('inc-av').textContent=av;
   document.getElementById('call-av').textContent=av;document.getElementById('call-nm').textContent=nm;
   document.getElementById('incoming').classList.add('show');
+  sendNotification(nm,'Incoming call','call-'+call.peer);
   setTimeout(function(){document.getElementById('incoming').classList.remove('show');},30000);
 }
 
@@ -1279,9 +1469,7 @@ function setNet(lbl,on){document.getElementById('nlbl').textContent=lbl;var d=do
 function showToast(msg,dur){var t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('on');if(dur)setTimeout(function(){t.classList.remove('on');},dur);}
 
 if('serviceWorker' in navigator){
-  window.addEventListener('load',function(){
-    navigator.serviceWorker.register('sw.js').catch(function(){});
-  });
+  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});
 }
 
 runBoot();

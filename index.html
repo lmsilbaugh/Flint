@@ -1403,58 +1403,90 @@ function sendNotification(title,body,tag){
 }
 
 // ── PeerJS ────────────────────────────────────────────────────────────────────
+var _peerInitialising=false;
+
 function initPeer(){
+  if(_peerInitialising)return;
+  _peerInitialising=true;
   setNet('Connecting...',false);
-  if(!S.myPeerId){S.myPeerId='flint-'+Math.random().toString(36).slice(2,10);localStorage.setItem('flint_pid',S.myPeerId);}
-  S.peer=new Peer(S.myPeerId,{config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'],username:'openrelayproject',credential:'openrelayproject'}]}});
+
+  if(S.peer){
+    try{S.peer.removeAllListeners();}catch(e){}
+    try{S.peer.destroy();}catch(e){}
+    S.peer=null;
+  }
+
+  if(!S.myPeerId){
+    S.myPeerId='flint-'+Math.random().toString(36).slice(2,10);
+    localStorage.setItem('flint_pid',S.myPeerId);
+  }
+
+  S.peer=new Peer(S.myPeerId,{config:{iceServers:[
+    {urls:'stun:stun.l.google.com:19302'},
+    {urls:'stun:stun1.l.google.com:19302'},
+    {urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'],
+     username:'openrelayproject',credential:'openrelayproject'}
+  ]}});
+
   S.peer.on('open',function(id){
-    S.peerId=id;setNet('Online · '+id.slice(0,16),true);
-    ['myid','my-peerid-modal','info-peerid'].forEach(function(i){document.getElementById(i).textContent=id;});
+    _peerInitialising=false;
+    S.peerId=id;
+    setNet('Online · '+id.slice(0,16),true);
+    ['myid','my-peerid-modal','info-peerid'].forEach(function(i){
+      document.getElementById(i).textContent=id;
+    });
     showToast('Connected',2500);
-    // Re-establish data channels to all known contacts after reconnect
-    setTimeout(function(){
-      S.contacts.forEach(function(c){
-        if(!S.conns[c.id]||!S.conns[c.id].open){
-          try{
-            var conn=S.peer.connect(c.id,{reliable:true,metadata:{name:S.name,avatar:S.avatar}});
-            wireConn(conn,c.name,c.avatar);
-          }catch(e){}
-        }
-      });
-    },1200);
+
     var pi=sessionStorage.getItem('fi');
     if(pi){
       sessionStorage.removeItem('fi');
       try{
         var d=JSON.parse(pi);
-        if(d.token){
-          // Secure token link — connect to burner peer ID for handshake
-          connectViaBurner(d.token,d.name||'Someone');
-        } else if(d.peerId){
-          // Legacy direct link
-          connectTo(d.peerId,d.name||'Someone',d.avatar||'⚡');
-        }
+        if(d.token){connectViaBurner(d.token,d.name||'Someone');}
+        else if(d.peerId){connectTo(d.peerId,d.name||'Someone',d.avatar||'⚡');}
       }catch(e){}
     }
-    var pr=sessionStorage.getItem('fr');if(pr){sessionStorage.removeItem('fr');try{var d=JSON.parse(pr);joinRoomFromInvite(d);}catch(e){}}
+    var pr=sessionStorage.getItem('fr');
+    if(pr){sessionStorage.removeItem('fr');try{var d=JSON.parse(pr);joinRoomFromInvite(d);}catch(e){}}
+
+    setTimeout(function(){
+      S.contacts.forEach(function(c){
+        if(!S.conns[c.id]||!S.conns[c.id].open)tryReconnect(c.id);
+      });
+    },1500);
   });
-  S.peer.on('connection',function(conn){if(conn.metadata&&conn.metadata.type==='room')handleRoomConn(conn);else wireConn(conn);});
-  S.peer.on('call',function(call){if(call.metadata&&call.metadata.type==='rv')handleRoomVoiceCall(call);else handleIncomingCall(call);});
-  S.peer.on('disconnected',function(){setNet('Reconnecting...',false);setTimeout(function(){if(S.peer&&!S.peer.destroyed)S.peer.reconnect();},1000);});
+
+  S.peer.on('connection',function(conn){
+    if(conn.metadata&&conn.metadata.type==='room')handleRoomConn(conn);
+    else wireConn(conn);
+  });
+  S.peer.on('call',function(call){
+    if(call.metadata&&call.metadata.type==='rv')handleRoomVoiceCall(call);
+    else handleIncomingCall(call);
+  });
+
+  S.peer.on('disconnected',function(){
+    setNet('Reconnecting...',false);
+    setTimeout(function(){
+      if(S.peer&&!S.peer.destroyed){try{S.peer.reconnect();}catch(e){}}
+    },2000);
+  });
+
   S.peer.on('error',function(err){
-    if(_resetting)return; // intentional reset — suppress error display
+    _peerInitialising=false;
     if(err&&err.type==='unavailable-id'){
       S.myPeerId='flint-'+Math.random().toString(36).slice(2,10);
       localStorage.setItem('flint_pid',S.myPeerId);
+      setTimeout(initPeer,1000);
+      return;
     }
-    if(err&&err.type==='network'){
-      setNet('No network...',false);
-      setTimeout(function(){if(!_resetting)initPeer();},4000);
-    } else {
-      setNet('Reconnecting...',false);
-      setTimeout(function(){if(!_resetting)initPeer();},4000);
+    if(err&&err.type==='browser-incompatible'){
+      setNet('Browser not supported',false);return;
     }
+    setNet('Reconnecting...',false);
+    setTimeout(initPeer,5000);
   });
+
   startKeepalive();
 }
 // ── Burner peer invite system ──────────────────────────────────────────────────

@@ -29,6 +29,8 @@
   --tx2: #888;
   --tx3: #555;
   --tx4: #333;
+  --btn: #c8c8c8;
+  --btn-hover: #b8b8b8;
   --ac: #e8e8e8;
   --ac2: #fff;
   --green: #22c55e;
@@ -77,7 +79,7 @@ html, body {
 @keyframes fadein { to { opacity: 1; } }
 #boot-btn { display: none; margin-top: 24px; }
 .ghost-btn {
-  background: var(--tx); color: var(--c0);
+  background: var(--btn); color: var(--c0);
   border: none; border-radius: var(--r);
   padding: 11px 28px;
   font-family: var(--sans); font-size: 13px; font-weight: 600;
@@ -130,7 +132,7 @@ html, body {
 .tinp:focus { border-color: var(--tx2); }
 .tinp::placeholder { color: var(--tx4); }
 .pbtn {
-  width: 100%; background: var(--tx); color: var(--c0);
+  width: 100%; background: var(--btn); color: var(--c0);
   border: none; border-radius: var(--r); padding: 12px;
   font-family: var(--sans); font-size: 14px; font-weight: 600;
   cursor: pointer; transition: opacity .15s;
@@ -160,7 +162,7 @@ html, body {
 }
 .sb-spark {
   width: 28px; height: 28px; border-radius: 6px;
-  background: var(--tx); display: flex; align-items: center;
+  background: var(--btn); display: flex; align-items: center;
   justify-content: center; flex-shrink: 0;
 }
 .sbname {
@@ -369,7 +371,7 @@ html, body {
 .feature-desc { font-size: 12px; color: var(--tx3); line-height: 1.5; }
 
 .start-btn {
-  width: 100%; background: var(--tx); color: var(--c0);
+  width: 100%; background: var(--btn); color: var(--c0);
   border: none; border-radius: var(--r2); padding: 14px;
   font-family: var(--sans); font-size: 14px; font-weight: 600;
   cursor: pointer; transition: opacity .15s; letter-spacing: .01em;
@@ -566,7 +568,7 @@ html, body {
 }
 .vm-play {
   width: 34px; height: 34px; border-radius: 50%;
-  background: var(--tx); border: none; cursor: pointer;
+  background: var(--btn); border: none; cursor: pointer;
   color: var(--c0); font-size: 13px;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   transition: opacity .12s;
@@ -811,7 +813,7 @@ html, body {
 .mdivider { border: none; border-top: 1px solid var(--bd); margin: 16px 0; }
 .btnpair { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
 .btnp {
-  background: var(--tx); border: none; color: var(--c0);
+  background: var(--btn); border: none; color: var(--c0);
   border-radius: var(--r); padding: 9px 20px;
   font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .12s;
 }
@@ -885,7 +887,7 @@ html, body {
   <div class="setup-card">
     <div class="setup-logo">
       <svg width="36" height="36" viewBox="0 0 36 36">
-        <rect width="36" height="36" rx="8" fill="#f0f0f0"/>
+        <rect width="36" height="36" rx="8" fill="#c8c8c8"/>
         <polygon points="18,5 21,14 29,11 20,19 23,30 16,21 7,25 11,14" fill="#0f0f0f"/>
       </svg>
       <div>
@@ -1111,7 +1113,7 @@ html, body {
     <div class="inc-sub">Incoming call</div>
   </div>
   <button class="inc-acc" onclick="acceptCall()">&#128222;</button>
-  <button class="inc-dec" onclick="document.getElementById('incoming').classList.remove('show')">&#10005;</button>
+  <button class="inc-dec" onclick="document.getElementById('incoming').classList.remove('show');stopRingtone()">&#10005;</button>
 </div>
 
 <!-- DIRECT INVITE MODAL -->
@@ -1133,7 +1135,9 @@ html, body {
           <button class="cpybtn" id="copy-inv-btn" onclick="copyInvLink()">Copy</button>
         </div>
         <button class="sharebig" onclick="shareInvLink()">&#8599;&nbsp; Share via WhatsApp / SMS / Email</button>
+        <button class="sharebig" style="margin-top:4px;background:transparent;color:var(--tx3);border-color:transparent" onclick="buildInvLink();document.getElementById('inv-link').textContent=S.invLink;showToast('New link generated',2000)">&#8635;&nbsp; Generate new link</button>
         <div style="font-family:var(--mono);font-size:11px;color:var(--tx3);line-height:1.8">They click &rarr; Flint opens &rarr; enter name &rarr; connected.</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:8px;display:flex;align-items:center;gap:5px"><span style="color:var(--yellow)">&#9679;</span> Link expires in 24 hours</div>
       </div>
       <div id="inv-panel-peer" style="display:none">
         <span class="mlbl">Their Peer ID</span>
@@ -1307,8 +1311,30 @@ function runBoot(){
 }
 function checkHash(){
   var h=location.hash;
-  if(h.startsWith('#join=')){try{var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));sessionStorage.setItem('fi',JSON.stringify(d));history.replaceState(null,'',location.pathname);bootNote('Invite from '+(d.name||'someone')+' — enter your name.');}catch(e){}}
-  else if(h.startsWith('#room=')){try{var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));sessionStorage.setItem('fr',JSON.stringify(d));history.replaceState(null,'',location.pathname);bootNote('Room invite: "'+d.name+'" — enter your name.');}catch(e){}}
+  if(h.startsWith('#join=')){
+    try{
+      var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));
+      history.replaceState(null,'',location.pathname);
+      if(d.exp&&Date.now()>d.exp){
+        bootNote('This invite link has expired. Ask for a new one.');
+      } else if(d.token){
+        // New secure token-based link
+        sessionStorage.setItem('fi',JSON.stringify(d));
+        bootNote('Invite from '+(d.name||'someone')+' — enter your name.');
+      } else if(d.peerId){
+        // Legacy link with real Peer ID (backwards compat)
+        sessionStorage.setItem('fi',JSON.stringify(d));
+        bootNote('Invite from '+(d.name||'someone')+' — enter your name.');
+      }
+    }catch(e){}
+  } else if(h.startsWith('#room=')){
+    try{
+      var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));
+      sessionStorage.setItem('fr',JSON.stringify(d));
+      history.replaceState(null,'',location.pathname);
+      bootNote('Room invite: "'+d.name+'" — enter your name.');
+    }catch(e){}
+  }
 }
 function bootNote(t){var el=document.createElement('div');el.className='bl w';el.style.animationDelay='0ms';el.textContent='  ◆  '+t;document.getElementById('boot-lines').appendChild(el);}
 function goSetup(){if(load()&&S.name&&S.name!=='Anonymous'){launchApp();return;}show('setup');setTimeout(function(){document.getElementById('setup-name').focus();},100);}
@@ -1335,19 +1361,85 @@ function initPeer(){
     S.peerId=id;setNet('Online · '+id.slice(0,16),true);
     ['myid','my-peerid-modal','info-peerid'].forEach(function(i){document.getElementById(i).textContent=id;});
     buildInvLink();showToast('Connected',2500);
-    var pi=sessionStorage.getItem('fi');if(pi){sessionStorage.removeItem('fi');try{var d=JSON.parse(pi);connectTo(d.peerId,d.name||'Someone',d.avatar||'⚡');}catch(e){}}
+    var pi=sessionStorage.getItem('fi');
+    if(pi){
+      sessionStorage.removeItem('fi');
+      try{
+        var d=JSON.parse(pi);
+        if(d.token){
+          // Secure token link — connect to burner peer ID for handshake
+          connectViaBurner(d.token,d.name||'Someone');
+        } else if(d.peerId){
+          // Legacy direct link
+          connectTo(d.peerId,d.name||'Someone',d.avatar||'⚡');
+        }
+      }catch(e){}
+    }
     var pr=sessionStorage.getItem('fr');if(pr){sessionStorage.removeItem('fr');try{var d=JSON.parse(pr);joinRoomFromInvite(d);}catch(e){}}
   });
   S.peer.on('connection',function(conn){if(conn.metadata&&conn.metadata.type==='room')handleRoomConn(conn);else wireConn(conn);});
   S.peer.on('call',function(call){if(call.metadata&&call.metadata.type==='rv')handleRoomVoiceCall(call);else handleIncomingCall(call);});
   S.peer.on('disconnected',function(){setNet('Reconnecting...',false);setTimeout(function(){if(S.peer&&!S.peer.destroyed)S.peer.reconnect();},1000);});
   S.peer.on('error',function(err){
-    // If peer ID is taken (from another tab/session), generate a fresh one
     if(err&&err.type==='unavailable-id'){S.myPeerId='flint-'+Math.random().toString(36).slice(2,10);localStorage.setItem('flint_pid',S.myPeerId);}
     setNet('Error — retrying...',false);setTimeout(initPeer,4000);
   });
+  startKeepalive();
 }
-function buildInvLink(){if(!S.peerId)return;var p=btoa(encodeURIComponent(JSON.stringify({peerId:S.peerId,name:S.name,avatar:S.avatar})));S.invLink=location.href.split('#')[0].split('?')[0]+'#join='+p;var el=document.getElementById('inv-link');if(el)el.textContent=S.invLink;}
+// ── Burner peer invite system ──────────────────────────────────────────────────
+// Real Peer ID never appears in any invite link.
+// A temporary burner peer is created per invite. It is destroyed after handshake.
+var S_burner = null;  // active burner peer
+var S_burnerToken = null; // active token
+
+function destroyBurner(){
+  if(S_burner){try{S_burner.destroy();}catch(e){}}
+  S_burner=null;S_burnerToken=null;
+}
+
+function buildInvLink(){
+  if(!S.peerId)return;
+  destroyBurner(); // clean up any previous burner
+  var token=Math.random().toString(36).slice(2,10);
+  var burnerId='flint-invite-'+token;
+  var exp=Date.now()+86400000; // 24h expiry still in link
+
+  S_burnerToken=token;
+  S_burner=new Peer(burnerId,{config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'],username:'openrelayproject',credential:'openrelayproject'}]}});
+
+  S_burner.on('open',function(){
+    // Build link with only the token — real Peer ID NOT included
+    var p=btoa(encodeURIComponent(JSON.stringify({token:token,name:S.name,exp:exp})));
+    S.invLink=location.href.split('#')[0].split('?')[0]+'#join='+p;
+    var el=document.getElementById('inv-link');if(el)el.textContent=S.invLink;
+  });
+
+  S_burner.on('connection',function(conn){
+    // Someone arrived on the burner peer — perform real ID exchange
+    conn.on('open',function(){
+      // Send our real Peer ID over the encrypted burner channel
+      conn.send({type:'id-exchange',realId:S.peerId,name:S.name,avatar:S.avatar});
+    });
+    conn.on('data',function(d){
+      if(d&&d.type==='id-exchange-ack'){
+        // They acknowledged, now connect on real IDs
+        var theirRealId=d.realId,theirName=d.name||'Someone',theirAvatar=d.avatar||'⚡';
+        conn.close();
+        destroyBurner(); // token burned — burner peer gone
+        // Connect on real Peer IDs
+        connectTo(theirRealId,theirName,theirAvatar);
+        showToast(theirName+' connected',3000);
+      }
+    });
+    conn.on('error',function(){});
+  });
+
+  S_burner.on('error',function(){
+    // If burner ID taken, try again with new token
+    destroyBurner();
+    buildInvLink();
+  });
+}
 
 // ── Direct connections ────────────────────────────────────────────────────────
 function connectTo(pid,name,avatar){if(S.conns[pid]&&S.conns[pid].open)return;showToast('Connecting to '+name+'...');wireConn(S.peer.connect(pid,{reliable:true,metadata:{name:S.name,avatar:S.avatar}}),name,avatar);}
@@ -1358,6 +1450,35 @@ function wireConn(conn,name,avatar){
   conn.on('close',function(){updStatus(pid,'off');clearTyping(pid);save();});
   conn.on('error',function(){updStatus(pid,'off');clearTyping(pid);});
 }
+function connectViaBurner(token,fromName){
+  // Connect to the burner peer to perform real ID exchange
+  var burnerId='flint-invite-'+token;
+  showToast('Connecting to '+fromName+'...');
+  var conn=S.peer.connect(burnerId,{reliable:true,metadata:{name:S.name,avatar:S.avatar}});
+  conn.on('open',function(){
+    // Wait for host to send their real ID
+  });
+  conn.on('data',function(d){
+    if(d&&d.type==='id-exchange'){
+      // Got their real Peer ID — acknowledge and connect on real IDs
+      conn.send({type:'id-exchange-ack',realId:S.peerId,name:S.name,avatar:S.avatar});
+      var theirRealId=d.realId,theirName=d.name||fromName,theirAvatar=d.avatar||'⚡';
+      setTimeout(function(){
+        conn.close();
+        connectTo(theirRealId,theirName,theirAvatar);
+      },300);
+    }
+  });
+  conn.on('error',function(e){
+    if(e&&(e.type==='peer-unavailable'||String(e).includes('unavailable'))){
+      showToast('Invite link expired or already used',3000);
+    } else {
+      showToast('Connection failed — check your link',3000);
+    }
+  });
+  conn.on('close',function(){});
+}
+
 function onDirectData(pid,data){
   if(!data||!data.type)return;
   if(data.type==='hello')addContact(pid,data.name||getName(pid),data.avatar||'⚡','on');
@@ -1725,15 +1846,23 @@ function togglePin(){
   renderList();save();
 }
 
+
+
+
 function closeChat(){
-  if(!S.selId)return;var c=getCt(S.selId),pid=S.selId,name=c?c.name:'contact';
-  var conn=S.conns[pid];if(conn){try{conn.close();}catch(e){}}delete S.conns[pid];
-  if(c){if(c.pinned){delete S.convos[pid];c.last='';c.unread=0;c.status='off';showToast('Chat cleared',2000);}else{S.contacts=S.contacts.filter(function(x){return x.id!==pid;});delete S.convos[pid];showToast('Chat closed',2000);}}
-  S.selId=null;S.activeView=null;hideAll();document.getElementById('empty-state').style.display='flex';renderList();save();
+  if(!S.selId)return;
+  var pid=S.selId,c=getCt(pid);
+  // Always: clear message history only. NEVER touch the connection.
+  delete S.convos[pid];
+  if(c){c.last='';c.unread=0;}
+  S.selId=null;S.activeView=null;
+  hideAll();document.getElementById('empty-state').style.display='flex';
+  renderList();save();
+  showToast('Chat history cleared',2000);
 }
 
 function handleKey(e,ctx){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg(ctx);}}
-function autoR(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,180)+'px';}
+
 
 function sendMsg(ctx){
   var isRoom=ctx==='room';
@@ -1869,7 +1998,7 @@ function openAddForTab(){if(S.activeTab==='rooms')openCreateRoom();else openAdd(
 function openAdd(){document.getElementById('invite-modal').classList.add('on');if(S.peerId){buildInvLink();document.getElementById('inv-link').textContent=S.invLink;}else{document.getElementById('inv-link').textContent='Connecting...';var poll=setInterval(function(){if(S.peerId){clearInterval(poll);buildInvLink();document.getElementById('inv-link').textContent=S.invLink;}},500);setTimeout(function(){clearInterval(poll);},15000);}}
 function openCreateRoom(){S.newRoomType='text';selType('text');document.getElementById('room-name-inp').value='';document.getElementById('room-modal').classList.add('on');setTimeout(function(){document.getElementById('room-name-inp').focus();},100);}
 function openInfo(){document.getElementById('info-modal').classList.add('on');}
-function closeModal(id){document.getElementById(id).classList.remove('on');}
+function closeModal(id){document.getElementById(id).classList.remove('on');if(id==='invite-modal')destroyBurner();}
 ['invite-modal','room-modal','info-modal','room-invite-modal'].forEach(function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id);});});
 function swInvTab(t){var lnk=t==='link';document.getElementById('inv-panel-link').style.display=lnk?'block':'none';document.getElementById('inv-panel-peer').style.display=lnk?'none':'block';document.getElementById('inv-tab-link').className='tabbtn'+(lnk?' on':'');document.getElementById('inv-tab-peer').className='tabbtn'+(!lnk?' on':'');}
 function copyInvLink(){if(!S.invLink)return;navigator.clipboard&&navigator.clipboard.writeText(S.invLink);var btn=document.getElementById('copy-inv-btn');btn.textContent='✓ Copied';btn.classList.add('copied');setTimeout(function(){btn.textContent='Copy';btn.classList.remove('copied');},2000);}
@@ -1878,12 +2007,12 @@ function copyPeerId(){navigator.clipboard&&navigator.clipboard.writeText(S.peerI
 function connectToPeer(){var pid=document.getElementById('peer-id-inp').value.trim(),nm=document.getElementById('peer-nm-inp').value.trim();if(!pid)return;closeModal('invite-modal');connectTo(pid,nm||pid.slice(0,10),'⚡');}
 
 // ── 1-1 Calls ─────────────────────────────────────────────────────────────────
-async function startCall(){if(!S.selId)return;var c=getCt(S.selId);if(!c)return;document.getElementById('call-st').textContent='Requesting microphone...';document.getElementById('call-live').style.display='none';document.getElementById('callscreen').classList.add('on');try{S.localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,sampleRate:48000}});var call=S.peer.call(S.selId,S.localStream,{metadata:{name:S.name,avatar:S.avatar}});S.calls[S.selId]=call;call.on('stream',function(r){playAudio(r);document.getElementById('call-st').textContent='Connected · Encrypted';document.getElementById('call-live').style.display='flex';startCallTimer();});call.on('close',endCall);call.on('error',endCall);document.getElementById('call-st').textContent='Ringing...';}catch(e){document.getElementById('call-st').textContent='Microphone denied';setTimeout(function(){document.getElementById('callscreen').classList.remove('on');},2500);}}
-function handleIncomingCall(call){S.incomingCall=call;var meta=call.metadata||{},nm=meta.name||getName(call.peer),av=meta.avatar||'⚡';document.getElementById('inc-nm').textContent=nm;document.getElementById('inc-av').textContent=av;document.getElementById('call-av').textContent=av;document.getElementById('call-nm').textContent=nm;document.getElementById('incoming').classList.add('show');sendNotification(nm,'Incoming call','call-'+call.peer);setTimeout(function(){document.getElementById('incoming').classList.remove('show');},30000);}
-async function acceptCall(){document.getElementById('incoming').classList.remove('show');if(!S.incomingCall)return;try{S.localStream=await navigator.mediaDevices.getUserMedia({audio:true});S.incomingCall.answer(S.localStream);S.incomingCall.on('stream',function(r){playAudio(r);document.getElementById('call-st').textContent='Connected · Encrypted';document.getElementById('call-live').style.display='flex';document.getElementById('callscreen').classList.add('on');startCallTimer();});S.incomingCall.on('close',endCall);}catch(e){}}
+async function startCall(){if(!S.selId)return;var c=getCt(S.selId);if(!c)return;document.getElementById('call-st').textContent='Requesting microphone...';document.getElementById('call-live').style.display='none';document.getElementById('callscreen').classList.add('on');try{S.localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,sampleRate:48000}});var call=S.peer.call(S.selId,S.localStream,{metadata:{name:S.name,avatar:S.avatar}});S.calls[S.selId]=call;call.on('stream',function(r){playAudio(r);document.getElementById('call-st').textContent='Connected · Encrypted';document.getElementById('call-live').style.display='flex';startCallTimer();requestWakeLock();});call.on('close',endCall);call.on('error',endCall);document.getElementById('call-st').textContent='Ringing...';}catch(e){document.getElementById('call-st').textContent='Microphone denied';setTimeout(function(){document.getElementById('callscreen').classList.remove('on');},2500);}}
+function handleIncomingCall(call){S.incomingCall=call;var meta=call.metadata||{},nm=meta.name||getName(call.peer),av=meta.avatar||'⚡';document.getElementById('inc-nm').textContent=nm;document.getElementById('inc-av').textContent=av;document.getElementById('call-av').textContent=av;document.getElementById('call-nm').textContent=nm;document.getElementById('incoming').classList.add('show');sendNotification(nm,'Incoming call','call-'+call.peer);startRingtone();setTimeout(function(){document.getElementById('incoming').classList.remove('show');stopRingtone();},30000);}
+async function acceptCall(){document.getElementById('incoming').classList.remove('show');stopRingtone();if(!S.incomingCall)return;try{S.localStream=await navigator.mediaDevices.getUserMedia({audio:true});S.incomingCall.answer(S.localStream);S.incomingCall.on('stream',function(r){playAudio(r);document.getElementById('call-st').textContent='Connected · Encrypted';document.getElementById('call-live').style.display='flex';document.getElementById('callscreen').classList.add('on');startCallTimer();requestWakeLock();});S.incomingCall.on('close',endCall);}catch(e){}}
 function playAudio(stream){var a=document.getElementById('ra-direct');if(!a){a=document.createElement('audio');a.id='ra-direct';a.autoplay=true;document.body.appendChild(a);}a.srcObject=stream;a.play().catch(function(){});}
 function startCallTimer(){S.callSecs=0;S.callTimer=setInterval(function(){S.callSecs++;document.getElementById('call-tm').textContent=Math.floor(S.callSecs/60)+':'+String(S.callSecs%60).padStart(2,'0');},1000);}
-function endCall(){clearInterval(S.callTimer);document.getElementById('callscreen').classList.remove('on');document.getElementById('call-live').style.display='none';if(S.localStream&&S.activeView!=='voice-room'){S.localStream.getTracks().forEach(function(t){t.stop();});S.localStream=null;}Object.values(S.calls).forEach(function(c){try{c.close();}catch(e){}});S.calls={};S.incomingCall=null;}
+function endCall(){clearInterval(S.callTimer);stopRingtone();releaseWakeLock();document.getElementById('callscreen').classList.remove('on');document.getElementById('call-live').style.display='none';if(S.localStream&&S.activeView!=='voice-room'){S.localStream.getTracks().forEach(function(t){t.stop();});S.localStream=null;}Object.values(S.calls).forEach(function(c){try{c.close();}catch(e){}});S.calls={};S.incomingCall=null;}
 function toggleMute(){S.muted=!S.muted;if(S.localStream)S.localStream.getAudioTracks().forEach(function(t){t.enabled=!S.muted;});var b=document.getElementById('mute-btn');b.textContent=S.muted?'🔇':'🎤';b.className='cbtn '+(S.muted?'mu':'nm');}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -1894,6 +2023,99 @@ function setNet(lbl,on){document.getElementById('nlbl').textContent=lbl;var d=do
 function showToast(msg,dur){var t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('on');if(dur)setTimeout(function(){t.classList.remove('on');},dur);}
 
 if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
+
+// ── Keepalive — prevent signaling server dropping session ─────────────────────
+var _kaTimer=null;
+function startKeepalive(){
+  clearInterval(_kaTimer);
+  _kaTimer=setInterval(function(){
+    if(S.peer&&!S.peer.destroyed){
+      if(S.peer.disconnected){
+        setNet('Reconnecting...',false);
+        try{S.peer.reconnect();}catch(e){}
+      }
+    }
+  },25000);
+}
+
+// ── Visibility change — reconnect instantly when user returns ─────────────────
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState!=='visible')return;
+  if(!S.peer)return;
+  if(S.peer.destroyed){
+    showToast('Reconnecting...',2000);
+    setTimeout(initPeer,500);
+    return;
+  }
+  if(S.peer.disconnected){
+    setNet('Reconnecting...',false);
+    try{S.peer.reconnect();}catch(e){setTimeout(initPeer,1000);}
+    return;
+  }
+  // Re-attempt connections to saved contacts that went offline
+  S.contacts.forEach(function(c){
+    if(c.pinned&&c.status==='off'&&(!S.conns[c.id]||!S.conns[c.id].open)){
+      // Silent reconnect attempt — don't show toast for each one
+      try{wireConn(S.peer.connect(c.id,{reliable:true,metadata:{name:S.name,avatar:S.avatar}}));}catch(e){}
+    }
+  });
+});
+
+// ── Audio ringtone via Web Audio API ─────────────────────────────────────────
+var _ringCtx=null,_ringNodes=[],_ringing=false;
+
+function startRingtone(){
+  if(_ringing)return;
+  _ringing=true;
+  try{
+    _ringCtx=new(window.AudioContext||window.webkitAudioContext)();
+    function ring(){
+      if(!_ringing)return;
+      // Two-tone phone ring: 480Hz + 620Hz for 2s, silent 4s
+      [480,620].forEach(function(freq){
+        var osc=_ringCtx.createOscillator();
+        var gain=_ringCtx.createGain();
+        osc.frequency.value=freq;
+        osc.type='sine';
+        gain.gain.setValueAtTime(0,_ringCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.18,_ringCtx.currentTime+0.05);
+        gain.gain.linearRampToValueAtTime(0.18,_ringCtx.currentTime+1.8);
+        gain.gain.linearRampToValueAtTime(0,_ringCtx.currentTime+2.0);
+        osc.connect(gain);gain.connect(_ringCtx.destination);
+        osc.start(_ringCtx.currentTime);osc.stop(_ringCtx.currentTime+2.0);
+        _ringNodes.push(osc);
+      });
+      _ringTimer=setTimeout(ring,6000);
+    }
+    ring();
+  }catch(e){}
+}
+
+var _ringTimer=null;
+function stopRingtone(){
+  _ringing=false;
+  clearTimeout(_ringTimer);
+  _ringNodes.forEach(function(n){try{n.stop();}catch(e){}});
+  _ringNodes=[];
+  if(_ringCtx){try{_ringCtx.close();}catch(e){}}_ringCtx=null;
+}
+
+// ── Screen wake lock during calls ─────────────────────────────────────────────
+var _wakeLock=null;
+async function requestWakeLock(){
+  if(!('wakeLock'in navigator))return;
+  try{_wakeLock=await navigator.wakeLock.request('screen');}catch(e){}
+}
+function releaseWakeLock(){
+  if(_wakeLock){try{_wakeLock.release();}catch(e){}}_wakeLock=null;
+}
+// Re-acquire wake lock if page visibility changes during a call
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible'&&_wakeLock===null){
+    if(document.getElementById('callscreen').classList.contains('on'))requestWakeLock();
+  }
+});
+
 runBoot();
 </script>
 </body>

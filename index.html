@@ -45,7 +45,7 @@ button{font-family:var(--sans);cursor:pointer}
 
 /* ── app shell ── */
 #app{align-items:stretch}
-.app-inner{flex:1;display:flex;flex-direction:column;height:100%;min-height:0}
+.app-inner{flex:1;display:flex;flex-direction:column;height:100%;min-height:0;width:100%}
 
 /* ── status strip ── */
 .strip{height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0}
@@ -59,18 +59,18 @@ button{font-family:var(--sans);cursor:pointer}
 .sico:hover{background:var(--s2);color:var(--tx2)}
 
 /* ── presence zone ── */
-.presence{flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:18px 0 12px;position:relative}
+.presence{flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;padding:32px 0 20px;position:relative}
 
 /* ── FLINT IDENTITY — electric field mark ── */
-.flint-mark{display:flex;flex-direction:column;align-items:center;animation:fmIn .5s cubic-bezier(.22,1,.36,1)}
+.flint-mark{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;animation:fmIn .5s cubic-bezier(.22,1,.36,1)}
 @keyframes fmIn{from{opacity:0;transform:translateY(-8px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
 
-.flint-field{position:relative;width:120px;height:120px;display:flex;align-items:center;justify-content:center}
+.flint-field{position:relative;width:200px;height:200px;display:flex;align-items:center;justify-content:center;margin:0 auto}
 
 /* outer plasma ring */
 .ff-plasma{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(139,92,246,.15);animation:plasma 6s ease-in-out infinite}
-.ff-plasma2{position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(59,130,246,.08);animation:plasma 6s ease-in-out infinite .8s}
-.ff-plasma3{position:absolute;inset:-18px;border-radius:50%;border:1px solid rgba(139,92,246,.04);animation:plasma 6s ease-in-out infinite 1.6s}
+.ff-plasma2{position:absolute;inset:-14px;border-radius:50%;border:1px solid rgba(59,130,246,.08);animation:plasma 6s ease-in-out infinite .8s}
+.ff-plasma3{position:absolute;inset:-30px;border-radius:50%;border:1px solid rgba(139,92,246,.04);animation:plasma 6s ease-in-out infinite 1.6s}
 @keyframes plasma{
   0%,100%{transform:scale(1);opacity:.6}
   33%{transform:scale(1.04);opacity:1}
@@ -94,8 +94,8 @@ button{font-family:var(--sans);cursor:pointer}
 .ff-bolt{position:relative;z-index:2;filter:drop-shadow(0 0 8px rgba(167,139,250,.7)) drop-shadow(0 0 24px rgba(109,40,217,.4))}
 
 /* arc traces */
-.ff-arc{position:absolute;width:90px;height:90px;border-radius:50%;border:1px solid transparent;border-top-color:rgba(139,92,246,.3);animation:arc 3s ease-in-out infinite}
-.ff-arc2{position:absolute;width:104px;height:104px;border-radius:50%;border:1px solid transparent;border-bottom-color:rgba(59,130,246,.2);animation:arc 4s ease-in-out infinite reverse .5s}
+.ff-arc{position:absolute;width:155px;height:155px;border-radius:50%;border:1px solid transparent;border-top-color:rgba(139,92,246,.3);animation:arc 3s ease-in-out infinite}
+.ff-arc2{position:absolute;width:178px;height:178px;border-radius:50%;border:1px solid transparent;border-bottom-color:rgba(59,130,246,.2);animation:arc 4s ease-in-out infinite reverse .5s}
 @keyframes arc{
   0%{transform:rotate(0deg);opacity:.3}
   50%{opacity:1}
@@ -104,11 +104,11 @@ button{font-family:var(--sans);cursor:pointer}
 
 /* wordmark */
 
-.ff-wordmark{font-size:13px;font-family:var(--mono);letter-spacing:.32em;color:var(--tx2);margin-top:13px;font-weight:500;text-transform:uppercase}
-.ff-tag{font-family:var(--mono);font-size:9px;color:var(--tx3);letter-spacing:.14em;text-transform:uppercase;margin-top:3px}
+.ff-wordmark{font-size:17px;font-family:var(--mono);letter-spacing:.44em;color:rgba(255,255,255,.55);margin-top:20px;font-weight:400;text-transform:uppercase;text-align:center;width:100%}
+
 
 /* ── CONTACT presence ── */
-.av-wrap{position:relative;width:76px;height:76px;animation:avIn .3s cubic-bezier(.22,1,.36,1)}
+.av-wrap{position:relative;width:76px;height:76px;animation:avIn .3s cubic-bezier(.22,1,.36,1);margin:0 auto}
 @keyframes avIn{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
 .pav{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:#fff;position:relative;z-index:1}
 .ring{position:absolute;border-radius:50%;border:1px solid;animation:breathe 4s ease-in-out infinite;pointer-events:none}
@@ -119,12 +119,12 @@ button{font-family:var(--sans);cursor:pointer}
 .av-dot.on{background:var(--grn)}
 .av-group{width:76px;height:76px;position:relative}
 .av-sm{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;border:2px solid var(--bg)}
-.p-name{font-size:19px;font-weight:600;letter-spacing:-.4px;margin-top:11px;color:var(--tx);max-width:280px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.p-meta{font-size:11px;font-family:var(--mono);color:var(--tx3);letter-spacing:.06em;margin-top:4px;display:flex;align-items:center;gap:5px}
+.p-name{font-size:19px;font-weight:600;letter-spacing:-.4px;margin-top:11px;color:var(--tx);width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p-meta{font-size:11px;font-family:var(--mono);color:var(--tx3);letter-spacing:.06em;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:5px;width:100%}
 .p-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0;transition:background .3s}
-.typing-lbl{background:var(--s2);border:1px solid var(--bd);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--tx3);font-family:var(--mono);display:none;margin-top:8px}
+.typing-lbl{background:var(--s2);border:1px solid var(--bd);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--tx3);font-family:var(--mono);display:none;margin-top:8px;text-align:center}
 .typing-lbl.on{display:block}
-.p-btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+.p-btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center;width:100%}
 .p-btn{background:var(--s2);border:1px solid var(--bd2);color:var(--tx2);border-radius:20px;padding:5px 15px;font-size:11px;font-weight:500;transition:all .15s}
 .p-btn:hover{border-color:var(--bd3);color:var(--tx)}
 .p-btn.dim{background:transparent;border-color:transparent;color:var(--tx3);font-size:10px}
@@ -142,12 +142,12 @@ button{font-family:var(--sans);cursor:pointer}
 .pull-btn{background:none;border:none;color:var(--tx3);font-family:var(--mono);font-size:9px;letter-spacing:.08em;align-items:center;gap:4px;margin:0 auto;padding:3px 10px;border-radius:20px;transition:all .15s;text-transform:uppercase;display:none}
 .pull-btn:hover{background:var(--s2);color:var(--tx2)}.pull-btn.vis{display:flex}
 .msgs{flex:1;overflow-y:auto;padding:6px 16px 4px;display:flex;flex-direction:column;justify-content:flex-end}
-.empty-v{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;flex:1}
+.empty-v{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 24px 32px;text-align:center;flex:1}
 .empty-ico{font-size:28px;opacity:.1;margin-bottom:12px}
 .empty-h{font-size:14px;font-weight:600;color:var(--tx2);margin-bottom:5px}
 .empty-s{font-size:12px;color:var(--tx3);line-height:1.7;margin-bottom:16px}
-.empty-cta{background:var(--s2);border:1px solid var(--bd2);color:var(--tx2);border-radius:var(--r2);padding:8px 18px;font-size:12px;font-weight:500;transition:all .15s}
-.empty-cta:hover{background:var(--s3);color:var(--tx)}
+.empty-cta{background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.25);color:rgba(167,139,250,.9);border-radius:20px;padding:10px 24px;font-size:12px;font-weight:500;letter-spacing:.04em;transition:all .2s}
+.empty-cta:hover{background:rgba(139,92,246,.22);border-color:rgba(139,92,246,.45);color:#e9d5ff}
 .j2b{position:absolute;bottom:6px;right:12px;width:28px;height:28px;border-radius:50%;background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);font-size:12px;display:none;align-items:center;justify-content:center;z-index:6;box-shadow:0 2px 8px rgba(0,0,0,.5)}
 .j2b.on{display:flex}
 
@@ -361,8 +361,8 @@ button{font-family:var(--sans);cursor:pointer}
 
       <div class="presence" id="presence">
         <div class="av-wrap" id="av-wrap"></div>
-        <div class="p-name" id="p-name">Flint</div>
-        <div class="p-meta"><span class="p-dot" id="p-dot" style="background:var(--grn)"></span><span id="p-meta-txt">Private P2P</span></div>
+        <div class="p-name" id="p-name"></div>
+        <div class="p-meta" id="p-meta" style="display:none"><span class="p-dot" id="p-dot"></span><span id="p-meta-txt"></span></div>
         <div class="typing-lbl" id="typing-lbl"></div>
         <div class="p-btns" id="p-btns"></div>
       </div>
@@ -611,7 +611,7 @@ function showEmpty(){
   S.sel=null;S.selType=null;
   document.getElementById('inp-outer').style.display='none';
   document.getElementById('pull-btn').classList.remove('vis');
-  document.getElementById('msgs').innerHTML='<div class="empty-v"><div class="empty-ico">&#9889;</div><div class="empty-h">Start a conversation</div><div class="empty-s">Tap + below to invite someone.<br>Direct device-to-device. No server.</div><button class="empty-cta" onclick="openInvite()">Get invite link &rarr;</button></div>';
+  document.getElementById('msgs').innerHTML='<div class="empty-v"><button class="empty-cta" onclick="openInvite()">+ Start a conversation</button></div>';
   setFlintMark();
   document.getElementById('p-btns').innerHTML='';
   renderDock();
@@ -637,7 +637,7 @@ function setFlintMark(){
       +'<div class="ff-orbit3"><div class="ff-spark3"></div></div>'
       // Flint logo mark — star/bolt hybrid (matches godsperspective.com logo)
       +'<div class="ff-logo">'
-        +'<svg width="44" height="44" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">'
+        +'<svg width="80" height="80" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">'
           +'<defs>'
             +'<linearGradient id="flg" x1="0" y1="0" x2="26" y2="26" gradientUnits="userSpaceOnUse">'
               +'<stop offset="0%" stop-color="#e9d5ff"/>'
@@ -655,7 +655,7 @@ function setFlintMark(){
     +'</div>'
     // wordmark
     +'<div class="ff-wordmark">FLINT</div>'
-    +'<div class="ff-tag">Private P2P</div>'
+    
     +'</div>';
 
   if(existing)existing.outerHTML=html;
@@ -698,9 +698,9 @@ function setPresence(name,sub,dotColor,avName,isGroup,groupMembers){
 }
 function updPresence(){
   // restore p-meta if hidden
+  if(!S.sel){setFlintMark();return;}
   var pm=document.getElementById('p-meta');if(pm)pm.style.display='flex';
   var pn=document.getElementById('p-name');if(pn)pn.textContent='';
-  if(!S.sel){setFlintMark();return;}
   if(S.selType==='contact'){
     var c=getCt(S.sel);if(!c)return;
     var on=S.conns[S.sel]&&S.conns[S.sel].open;

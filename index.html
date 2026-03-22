@@ -121,6 +121,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .hdbtn.voice{border-color:rgba(155,127,212,.3);background:rgba(155,127,212,.1);color:var(--purple)}
 .hdbtn.voice:hover{background:rgba(155,127,212,.2)}
 .hdbtn.danger{border-color:rgba(224,92,110,.3);background:rgba(224,92,110,.08);color:var(--red)}
+.hdbtn.pinned{border-color:rgba(224,168,76,.4);background:rgba(224,168,76,.12);color:var(--amber)}
 .hdbtn.danger:hover{background:rgba(224,92,110,.18)}
 .msgs{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column}
 .sysmsg{text-align:center;font-family:var(--mono);font-size:10px;color:var(--tx3);padding:4px 0;margin-bottom:8px}
@@ -148,7 +149,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 }
 .mwrap:hover .react-btn{opacity:1}
 .react-btn:hover{background:var(--bg4);border-color:var(--bd3)}
-@media(hover:none){.react-btn{opacity:.4}}
+.mwrap .react-btn{opacity:.15}
+.mwrap:hover .react-btn{opacity:1}
+@media(hover:none){.mwrap .react-btn{opacity:.4}}
 
 /* Receipt */
 .receipt{font-size:10px;color:var(--tx3);margin-top:2px;text-align:right}
@@ -413,7 +416,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
           <div class="convid" id="dch-id">&#8212;</div>
           <div class="typing-lbl" id="dch-typing"></div>
         </div>
-        <div class="hdacts"><button class="hdbtn" onclick="startCall()">&#128222; Call</button></div>
+        <div class="hdacts">
+          <button class="hdbtn" id="pin-btn" onclick="togglePin()">&#9733;</button>
+          <button class="hdbtn" onclick="startCall()">&#128222; Call</button>
+          <button class="hdbtn danger" onclick="closeChat()">&#10005; Close</button>
+        </div>
       </div>
       <div class="msgs" id="direct-msgs"></div>
       <div class="inputwrap">
@@ -421,7 +428,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
           <button class="attbtn" onclick="document.getElementById('direct-file').click()">&#128206;</button>
           <input type="file" id="direct-file" style="display:none" onchange="sendFile(this,false)">
           <textarea class="msgta" id="direct-ta" placeholder="Message..." rows="1" onkeydown="handleKey(event,'direct')" oninput="onTyping('direct',this)"></textarea>
-          <button class="micbtn" id="direct-mic" onmousedown="startRec('direct')" onmouseup="stopRec('direct')" ontouchstart="startRec('direct')" ontouchend="stopRec('direct')" title="Hold to record">&#127908;</button>
+          <button class="micbtn" id="direct-mic" onmousedown="startRec2('direct')" onmouseup="stopRec('direct')" ontouchstart="startRec('direct')" ontouchend="stopRec('direct')" title="Hold to record">&#127908;</button>
           <button class="sendbtn" onclick="sendMsg('direct')">&#8629;</button>
         </div>
       </div>
@@ -448,7 +455,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
           <button class="attbtn" onclick="document.getElementById('room-file').click()">&#128206;</button>
           <input type="file" id="room-file" style="display:none" onchange="sendFile(this,true)">
           <textarea class="msgta" id="room-ta" placeholder="Message room..." rows="1" onkeydown="handleKey(event,'room')" oninput="onTyping('room',this)"></textarea>
-          <button class="micbtn" id="room-mic" onmousedown="startRec('room')" onmouseup="stopRec('room')" ontouchstart="startRec('room')" ontouchend="stopRec('room')" title="Hold to record">&#127908;</button>
+          <button class="micbtn" id="room-mic" onmousedown="startRec2('room')" onmouseup="stopRec('room')" ontouchstart="startRec('room')" ontouchend="stopRec('room')" title="Hold to record">&#127908;</button>
           <button class="sendbtn" onclick="sendMsg('room')">&#8629;</button>
         </div>
       </div>
@@ -595,6 +602,7 @@ var S = {
   callTimer:null, callSecs:0,
   incomingCall:null, invLink:null,
   fileXfers:{}, newRoomType:'text',
+  myPeerId:localStorage.getItem('flint_pid')||null,
   typingTimers:{}, roomTyping:{},
   recorder:null, recChunks:[]
 };
@@ -610,7 +618,7 @@ function save(){
   try{
     localStorage.setItem(SK,JSON.stringify({
       name:S.name,avatar:S.avatar,
-      contacts:S.contacts.map(function(c){return {id:c.id,name:c.name,avatar:c.avatar,last:c.last,status:'off',unread:0};}),
+      contacts:S.contacts.map(function(c){return {id:c.id,name:c.name,avatar:c.avatar,last:c.last,status:'off',unread:0,pinned:c.pinned||false};}),
       convos:cleanMsgs(S.convos),
       rooms:Object.values(S.rooms).map(function(r){return {id:r.id,name:r.name,type:r.type,hostId:r.hostId,convos:cleanMsgs({x:r.convos}).x||[]};})
     }));
@@ -683,7 +691,8 @@ function sendNotification(title,body,tag){
 // ── PeerJS ────────────────────────────────────────────────────────────────────
 function initPeer(){
   setNet('Connecting...',false);
-  S.peer=new Peer('flint-'+Math.random().toString(36).slice(2,10),{config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'],username:'openrelayproject',credential:'openrelayproject'}]}});
+  if(!S.myPeerId){S.myPeerId='flint-'+Math.random().toString(36).slice(2,10);localStorage.setItem('flint_pid',S.myPeerId);}
+  S.peer=new Peer(S.myPeerId,{config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'],username:'openrelayproject',credential:'openrelayproject'}]}});
   S.peer.on('open',function(id){
     S.peerId=id;setNet('Online',true);
     ['myid','my-peerid-modal','info-peerid'].forEach(function(i){document.getElementById(i).textContent=id;});
@@ -818,6 +827,8 @@ function startRec(ctx){
   }).catch(function(){showToast('Microphone access denied',2000);});
 }
 function stopRec(ctx){if(S.recorder&&S.recorder.state==='recording')S.recorder.stop();var btn=document.getElementById(ctx+'-mic');if(btn)btn.classList.remove('rec');}
+var _recCtx=null;
+function startRec2(ctx){_recCtx=ctx;startRec(ctx);document.addEventListener('mouseup',function _mu(){stopRec(_recCtx);document.removeEventListener('mouseup',_mu);},{once:true});}
 
 var VMCHUNK=32768;
 function sendVoiceMemo(blob,dur,isRoom){
@@ -927,9 +938,12 @@ function escAttr(s){return(s||'').replace(/'/g,"\\'");}
 
 // Linkify — detect URLs after escaping
 function linkify(text){
-  return esc(text).replace(/(https?:\/\/[^\s&lt;&gt;"']+)/g,function(url){
-    return '<a href="'+url+'" target="_blank" rel="noopener noreferrer">'+url+'</a>';
-  });
+  var urlRe=/(https?:\/\/[^\s<>"']+)/g;
+  var parts=text.split(urlRe);
+  return parts.map(function(part,i){
+    if(i%2===1){var safe=esc(part);return '<a href="'+safe+'" target="_blank" rel="noopener noreferrer">'+safe+'</a>';}
+    return esc(part);
+  }).join('');
 }
 
 function msgWrap(m,isMe,innerHtml,isRoom){
@@ -937,7 +951,7 @@ function msgWrap(m,isMe,innerHtml,isRoom){
   return '<div class="mwrap'+(isMe?' me':'')+'">'
     +'<div class="bubble-row">'
     +innerHtml
-    +'<button class="react-btn" onclick="openPicker(\''+escAttr(mid)+'\','+(isRoom?'true':'false')+',this)">&#128165;</button>'
+    +'<button class="react-btn" onclick="openPicker(\''+escAttr(mid)+'\','+(isRoom?'true':'false')+',this)"><svg width="12" height="12" viewBox="0 0 26 26" style="pointer-events:none"><polygon points="13,2 16,10 23,8 15,15 18,23 12,16 4,19 8,10" fill="#5bb8d4" opacity=".8"/></svg></button>'
     +'</div>'
     +(isMe?'<div class="receipt'+(m.read?' read':'')+'">'+( m.read?'✓✓':'✓')+'</div>':'')
     +reactHtml(m.reactions||{},mid,isRoom)
@@ -1041,6 +1055,9 @@ function renderRoom(rid){
 }
 
 // ── Direct chat UI ────────────────────────────────────────────────────────────
+
+
+
 function openConvo(pid){
   S.selId=pid;S.selRoom=null;var c=getCt(pid);if(c)c.unread=0;
   renderList(document.getElementById('srch').value);hideAll();
@@ -1051,12 +1068,58 @@ function openConvo(pid){
   document.getElementById('call-av').textContent=c?c.avatar:'⚡';
   document.getElementById('call-nm').textContent=c?c.name:'—';
   var tl=document.getElementById('dch-typing');if(tl){tl.textContent='';tl.classList.remove('on');}
+  // Update pin button state
+  var pinBtn=document.getElementById('pin-btn');
+  if(pinBtn){
+    if(c&&c.pinned){pinBtn.classList.add('pinned');pinBtn.title='Unsave contact';pinBtn.textContent='★';}
+    else{pinBtn.classList.remove('pinned');pinBtn.title='Save contact';pinBtn.textContent='☆';}
+  }
   renderDirect(pid);sendDirect(pid,{type:'read'});
   setTimeout(function(){document.getElementById('direct-ta').focus();},50);
 }
 
+// ── Save contacts ─────────────────────────────────────────────────────────────
+function togglePin(){
+  if(!S.selId)return;
+  var c=getCt(S.selId);if(!c)return;
+  c.pinned=!c.pinned;
+  var pinBtn=document.getElementById('pin-btn');
+  if(pinBtn){
+    if(c.pinned){pinBtn.classList.add('pinned');pinBtn.title='Unsave contact';pinBtn.textContent='★';showToast(c.name+' saved',2000);}
+    else{pinBtn.classList.remove('pinned');pinBtn.title='Save contact';pinBtn.textContent='☆';showToast(c.name+' unsaved',2000);}
+  }
+  renderList();save();
+}
+
+// ── Close chat ────────────────────────────────────────────────────────────────
+function closeChat(){
+  if(!S.selId)return;
+  var c=getCt(S.selId);
+  var name=c?c.name:'this contact';
+  var pid=S.selId;
+  // Close the connection
+  var conn=S.conns[pid];if(conn){try{conn.close();}catch(e){}}
+  delete S.conns[pid];
+  if(c){
+    if(c.pinned){
+      // Pinned contacts: keep in sidebar, just clear messages
+      delete S.convos[pid];
+      c.last='';c.unread=0;c.status='off';
+      showToast('Chat with '+name+' cleared',2000);
+    } else {
+      // Unpinned: remove completely
+      S.contacts=S.contacts.filter(function(x){return x.id!==pid;});
+      delete S.convos[pid];
+      showToast('Chat with '+name+' closed',2000);
+    }
+  }
+  S.selId=null;S.activeView=null;
+  hideAll();document.getElementById('empty-state').style.display='flex';
+  renderList();save();
+}
+
 function handleKey(e,ctx){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg(ctx);}}
-function autoR(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';}
+
 
 function sendMsg(ctx){
   var isRoom=ctx==='room';
@@ -1130,9 +1193,22 @@ function fbytes(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1
 function ficon(n){var e=(n||'').split('.').pop().toLowerCase();var m={pdf:'📄',doc:'📝',docx:'📝',txt:'📝',xls:'📊',xlsx:'📊',csv:'📊',jpg:'🖼️',jpeg:'🖼️',png:'🖼️',gif:'🖼️',webp:'🖼️',mp4:'🎬',mov:'🎬',mp3:'🎵',wav:'🎵',zip:'🗜️',rar:'🗜️',js:'💻',html:'💻',py:'💻'};return m[e]||'📁';}
 
 // ── Contacts & list ───────────────────────────────────────────────────────────
-function addContact(pid,name,avatar,status){var c=getCt(pid);if(c){c.name=name;c.avatar=avatar;c.status=status;}else{S.contacts.unshift({id:pid,name:name,avatar:avatar,status:status,last:'Connected',unread:0});S.convos[pid]=S.convos[pid]||[];}renderList();save();}
+
+
+function addContact(pid,name,avatar,status){
+  var c=getCt(pid);
+  if(c){
+    c.name=name;c.avatar=avatar;c.status=status;
+    // Pinned contacts: update status and reconnect data channel if needed
+    if(c.pinned&&!S.convos[pid])S.convos[pid]=[];
+  } else {
+    S.contacts.unshift({id:pid,name:name,avatar:avatar,status:status,last:'Connected',unread:0,pinned:false});
+    S.convos[pid]=S.convos[pid]||[];
+  }
+  renderList();save();
+}
 function updStatus(pid,st){var c=getCt(pid);if(c){c.status=st;renderList();}}
-function getCt(pid){return S.contacts.find(function(x){return x.id===pid;});}
+
 function getName(pid){var c=getCt(pid);return c?c.name:pid.slice(0,10);}
 
 function renderList(filter){
@@ -1149,7 +1225,10 @@ function renderList(filter){
     var h='';if(txt.length){h+='<div class="seclbl">Text Rooms</div>';txt.forEach(function(r){h+=roomHtml(r);});}if(voi.length){h+='<div class="seclbl">Voice Rooms</div>';voi.forEach(function(r){h+=roomHtml(r);});}el.innerHTML=h;
   }
 }
-function ctHtml(c){return '<div class="ct '+(S.selId===c.id?'sel':'')+'" onclick="openConvo(\''+c.id+'\')">'+'<div class="ctav"><span>'+esc(c.avatar)+'</span><div class="ctstatus '+(c.status==='on'?'on':'')+'"></div></div>'+'<div class="cti"><div class="ctn">'+esc(c.name)+'</div><div class="cts">'+esc(c.last||'').slice(0,28)+'</div></div>'+(c.unread?'<div class="ubadge">'+c.unread+'</div>':'')+'</div>';}
+function ctHtml(c){
+  return '<div class="ct '+(S.selId===c.id?'sel':'')+'" onclick="openConvo(\''+c.id+'\')">'    +'<div class="ctav"><span>'+esc(c.avatar)+'</span><div class="ctstatus '+(c.status==='on'?'on':'')+'"></div></div>'    +'<div class="cti"><div class="ctn">'+esc(c.name)+(c.pinned?' <span style=\'color:var(--amber);font-size:10px\'>★</span>':'')+'</div>'    +'<div class="cts">'+esc(c.last||'').slice(0,28)+'</div></div>'    +(c.unread?'<div class="ubadge">'+c.unread+'</div>':'')
+    +'</div>';
+}
 function roomHtml(r){var isV=r.type==='voice',n=Object.keys(r.members||{}).length;return '<div class="ri '+(S.selRoom===r.id?'sel':'')+'" onclick="openRoom(\''+r.id+'\')">'+'<div class="rico '+(isV?'voice':'')+'">'+( isV?'🔊':'#')+'</div>'+'<div class="rinfo"><div class="rname">'+esc(r.name)+'</div><div class="rsub">'+(n>0?n+' online':'tap to open')+'</div></div>'+(r.unread?'<div class="rbadge">'+r.unread+'</div>':'')+'</div>';}
 function filterList(v){renderList(v);}
 

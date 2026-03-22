@@ -1415,20 +1415,16 @@ function buildInvLink(){
   });
 
   S_burner.on('connection',function(conn){
-    // Someone arrived on the burner peer — perform real ID exchange
-    conn.on('open',function(){
-      // Send our real Peer ID over the encrypted burner channel
-      conn.send({type:'id-exchange',realId:S.peerId,name:S.name,avatar:S.avatar});
-    });
+    // Joiner arrives — wait for them to send their real ID first
     conn.on('data',function(d){
-      if(d&&d.type==='id-exchange-ack'){
-        // They acknowledged, now connect on real IDs
+      if(d&&d.type==='id-hello'){
+        // Joiner sent us their real ID — reply with ours then connect
         var theirRealId=d.realId,theirName=d.name||'Someone',theirAvatar=d.avatar||'⚡';
-        conn.close();
-        destroyBurner(); // token burned — burner peer gone
-        // Connect on real Peer IDs
-        connectTo(theirRealId,theirName,theirAvatar);
-        showToast(theirName+' connected',3000);
+        try{conn.send({type:'id-reply',realId:S.peerId,name:S.name,avatar:S.avatar});}catch(e){}
+        setTimeout(function(){
+          destroyBurner(); // token burned — burner gone after this
+          connectTo(theirRealId,theirName,theirAvatar);
+        },400);
       }
     });
     conn.on('error',function(){});
@@ -1451,29 +1447,28 @@ function wireConn(conn,name,avatar){
   conn.on('error',function(){updStatus(pid,'off');clearTyping(pid);});
 }
 function connectViaBurner(token,fromName){
-  // Connect to the burner peer to perform real ID exchange
   var burnerId='flint-invite-'+token;
   showToast('Connecting to '+fromName+'...');
   var conn=S.peer.connect(burnerId,{reliable:true,metadata:{name:S.name,avatar:S.avatar}});
   conn.on('open',function(){
-    // Wait for host to send their real ID
+    // Joiner initiates — send our real ID to the host immediately on open
+    try{conn.send({type:'id-hello',realId:S.peerId,name:S.name,avatar:S.avatar});}catch(e){}
   });
   conn.on('data',function(d){
-    if(d&&d.type==='id-exchange'){
-      // Got their real Peer ID — acknowledge and connect on real IDs
-      conn.send({type:'id-exchange-ack',realId:S.peerId,name:S.name,avatar:S.avatar});
+    if(d&&d.type==='id-reply'){
+      // Host replied with their real ID — connect on real IDs
       var theirRealId=d.realId,theirName=d.name||fromName,theirAvatar=d.avatar||'⚡';
       setTimeout(function(){
-        conn.close();
+        try{conn.close();}catch(e){}
         connectTo(theirRealId,theirName,theirAvatar);
-      },300);
+      },200);
     }
   });
   conn.on('error',function(e){
     if(e&&(e.type==='peer-unavailable'||String(e).includes('unavailable'))){
       showToast('Invite link expired or already used',3000);
     } else {
-      showToast('Connection failed — check your link',3000);
+      showToast('Connection failed — try again',3000);
     }
   });
   conn.on('close',function(){});

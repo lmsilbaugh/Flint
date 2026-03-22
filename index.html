@@ -1144,9 +1144,9 @@ html, body {
           <button class="cpybtn" id="copy-inv-btn" onclick="copyInvLink()">Copy</button>
         </div>
         <button class="sharebig" onclick="shareInvLink()">&#8599;&nbsp; Share via WhatsApp / SMS / Email</button>
-        <button class="sharebig" style="margin-top:4px;background:transparent;color:var(--tx3);border-color:transparent" onclick="buildInvLink();document.getElementById('inv-link').textContent=S.invLink;showToast('New link generated',2000)">&#8635;&nbsp; Generate new link</button>
+        <button class="sharebig" style="margin-top:4px;background:transparent;color:var(--tx3);border-color:transparent" onclick="buildInvLink();showToast('Generating new link...',1500)">&#8635;&nbsp; Generate new link</button>
         <div style="font-family:var(--mono);font-size:11px;color:var(--tx3);line-height:1.8">They click &rarr; Flint opens &rarr; enter name &rarr; connected.</div>
-        <div style="font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:8px;display:flex;align-items:center;gap:5px"><span style="color:var(--yellow)">&#9679;</span> Link expires in 24 hours</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:8px;display:flex;align-items:center;gap:5px"><span style="color:var(--green)">&#9679;</span> Single use &mdash; expires after one connection</div>
       </div>
       <div id="inv-panel-peer" style="display:none">
         <span class="mlbl">Their Peer ID</span>
@@ -1354,7 +1354,7 @@ function checkHash(){
       var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));
       history.replaceState(null,'',location.pathname);
       if(d.exp&&Date.now()>d.exp){
-        bootNote('This invite link has expired. Ask for a new one.');
+        bootNote('This invite link has expired or already been used. Ask for a new one.');
       } else if(d.token){
         // New secure token-based link
         sessionStorage.setItem('fi',JSON.stringify(d));
@@ -1470,30 +1470,34 @@ function destroyBurner(){
 
 function buildInvLink(){
   if(!S.peerId)return;
-  destroyBurner(); // clean up any previous burner
+  destroyBurner();
+  var el=document.getElementById('inv-link');
+  if(el)el.textContent='Generating secure link...';
+
   var token=Math.random().toString(36).slice(2,10);
   var burnerId='flint-invite-'+token;
-  var exp=Date.now()+86400000; // 24h expiry still in link
-
   S_burnerToken=token;
-  S_burner=new Peer(burnerId,{config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'],username:'openrelayproject',credential:'openrelayproject'}]}});
+  S_burner=new Peer(burnerId,{config:{iceServers:[
+    {urls:'stun:stun.l.google.com:19302'},
+    {urls:'stun:stun1.l.google.com:19302'},
+    {urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'],username:'openrelayproject',credential:'openrelayproject'}
+  ]}});
 
   S_burner.on('open',function(){
-    // Build link with only the token — real Peer ID NOT included
-    var p=btoa(encodeURIComponent(JSON.stringify({token:token,name:S.name,exp:exp})));
+    // Build link with token only — real Peer ID never in the link
+    var p=btoa(encodeURIComponent(JSON.stringify({token:token,name:S.name})));
     S.invLink=location.href.split('#')[0].split('?')[0]+'#join='+p;
-    var el=document.getElementById('inv-link');if(el)el.textContent=S.invLink;
+    var el=document.getElementById('inv-link');
+    if(el)el.textContent=S.invLink;
   });
 
   S_burner.on('connection',function(conn){
-    // Joiner arrives — wait for them to send their real ID first
     conn.on('data',function(d){
       if(d&&d.type==='id-hello'){
-        // Joiner sent us their real ID — reply with ours then connect
         var theirRealId=d.realId,theirName=d.name||'Someone',theirAvatar=d.avatar||'⚡';
         try{conn.send({type:'id-reply',realId:S.peerId,name:S.name,avatar:S.avatar});}catch(e){}
         setTimeout(function(){
-          destroyBurner(); // token burned — burner gone after this
+          destroyBurner();
           connectTo(theirRealId,theirName,theirAvatar);
         },400);
       }
@@ -1502,9 +1506,9 @@ function buildInvLink(){
   });
 
   S_burner.on('error',function(){
-    // If burner ID taken, try again with new token
     destroyBurner();
-    buildInvLink();
+    // Short delay then retry with new token
+    setTimeout(buildInvLink,1000);
   });
 }
 
@@ -2168,7 +2172,20 @@ function filterList(v){renderList(v);}
 // ── Tabs & modals ─────────────────────────────────────────────────────────────
 function switchTab(tab){S.activeTab=tab;document.getElementById('tab-direct').className='sbtab'+(tab==='direct'?' on':'');document.getElementById('tab-rooms').className='sbtab'+(tab==='rooms'?' on':'');renderList();}
 function openAddForTab(){if(S.activeTab==='rooms')openCreateRoom();else openAdd();}
-function openAdd(){document.getElementById('invite-modal').classList.add('on');if(S.peerId){buildInvLink();document.getElementById('inv-link').textContent=S.invLink;}else{document.getElementById('inv-link').textContent='Connecting...';var poll=setInterval(function(){if(S.peerId){clearInterval(poll);buildInvLink();document.getElementById('inv-link').textContent=S.invLink;}},500);setTimeout(function(){clearInterval(poll);},15000);}}
+function openAdd(){
+  document.getElementById('invite-modal').classList.add('on');
+  var el=document.getElementById('inv-link');
+  if(S.peerId){
+    // buildInvLink is async — it sets the link text itself when the burner peer opens
+    buildInvLink();
+  } else {
+    if(el)el.textContent='Connecting to network...';
+    var poll=setInterval(function(){
+      if(S.peerId){clearInterval(poll);buildInvLink();}
+    },500);
+    setTimeout(function(){clearInterval(poll);},15000);
+  }
+}
 function openCreateRoom(){S.newRoomType='text';selType('text');document.getElementById('room-name-inp').value='';document.getElementById('room-modal').classList.add('on');setTimeout(function(){document.getElementById('room-name-inp').focus();},100);}
 function openInfo(){document.getElementById('info-modal').classList.add('on');}
 function closeModal(id){document.getElementById(id).classList.remove('on');if(id==='invite-modal')destroyBurner();}

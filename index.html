@@ -1378,6 +1378,7 @@ function bootNote(t){var el=document.createElement('div');el.className='bl w';el
 function goSetup(){if(load()&&S.name&&S.name!=='Anonymous'){launchApp();return;}show('setup');setTimeout(function(){document.getElementById('setup-name').focus();},100);}
 function enterApp(){S.name=document.getElementById('setup-name').value.trim()||'Anonymous';save();launchApp();}
 function launchApp(){
+  startKeepalive();
   var myEl=document.getElementById('myav');
   if(myEl){
     var colors=nameToColor(S.name||'?');
@@ -1475,9 +1476,9 @@ function initPeer(){
   S.peer.on('error',function(err){
     _peerInitialising=false;
     if(err&&err.type==='unavailable-id'){
-      S.myPeerId='flint-'+Math.random().toString(36).slice(2,10);
-      localStorage.setItem('flint_pid',S.myPeerId);
-      setTimeout(initPeer,1000);
+      // ID still registered on server from previous session — wait and retry same ID
+      setNet('Reconnecting...',false);
+      setTimeout(initPeer,8000);
       return;
     }
     if(err&&err.type==='browser-incompatible'){
@@ -1487,7 +1488,6 @@ function initPeer(){
     setTimeout(initPeer,5000);
   });
 
-  startKeepalive();
 }
 // ── Burner peer invite system ──────────────────────────────────────────────────
 // Real Peer ID never appears in any invite link.

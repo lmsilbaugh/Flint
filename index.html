@@ -1361,6 +1361,12 @@ function initPeer(){
     S.peerId=id;setNet('Online · '+id.slice(0,16),true);
     ['myid','my-peerid-modal','info-peerid'].forEach(function(i){document.getElementById(i).textContent=id;});
     buildInvLink();showToast('Connected',2500);
+    // Re-establish data channels to all known contacts after signaling reconnect
+    setTimeout(function(){
+      S.contacts.forEach(function(c){
+        if(!S.conns[c.id]||!S.conns[c.id].open)tryReconnect(c.id);
+      });
+    },1500);
     var pi=sessionStorage.getItem('fi');
     if(pi){
       sessionStorage.removeItem('fi');
@@ -1441,10 +1447,59 @@ function buildInvLink(){
 function connectTo(pid,name,avatar){if(S.conns[pid]&&S.conns[pid].open)return;showToast('Connecting to '+name+'...');wireConn(S.peer.connect(pid,{reliable:true,metadata:{name:S.name,avatar:S.avatar}}),name,avatar);}
 function wireConn(conn,name,avatar){
   var pid=conn.peer;S.conns[pid]=conn;
-  conn.on('open',function(){var nm=(conn.metadata&&conn.metadata.name)?conn.metadata.name:(name||pid.slice(0,10));var av=(conn.metadata&&conn.metadata.avatar)?conn.metadata.avatar:(avatar||'⚡');addContact(pid,nm,av,'on');conn.send({type:'hello',name:S.name,avatar:S.avatar});showToast('Connected to '+nm,3000);});
+  conn.on('open',function(){
+    var nm=(conn.metadata&&conn.metadata.name)?conn.metadata.name:(name||pid.slice(0,10));
+    var av=(conn.metadata&&conn.metadata.avatar)?conn.metadata.avatar:(avatar||'⚡');
+    addContact(pid,nm,av,'on');
+    conn.send({type:'hello',name:S.name,avatar:S.avatar});
+    showToast('Connected to '+nm,3000);
+    // Resend any unread queued messages
+    flushQueue(pid);
+  });
   conn.on('data',function(d){onDirectData(pid,d);});
-  conn.on('close',function(){updStatus(pid,'off');clearTyping(pid);save();});
-  conn.on('error',function(){updStatus(pid,'off');clearTyping(pid);});
+  conn.on('close',function(){
+    updStatus(pid,'off');clearTyping(pid);save();
+    // Schedule auto-reconnect — data channel closed but contact still known
+    scheduleReconnect(pid);
+  });
+  conn.on('error',function(){
+    updStatus(pid,'off');clearTyping(pid);
+    scheduleReconnect(pid);
+  });
+}
+
+// Reconnect timers per peer
+var _reconnTimers={};
+function scheduleReconnect(pid){
+  // Only reconnect to known contacts, not strangers
+  if(!getCt(pid))return;
+  clearTimeout(_reconnTimers[pid]);
+  _reconnTimers[pid]=setTimeout(function(){
+    tryReconnect(pid);
+  },3000); // wait 3s before retrying
+}
+
+function tryReconnect(pid){
+  if(!S.peer||S.peer.destroyed||S.peer.disconnected)return;
+  if(S.conns[pid]&&S.conns[pid].open)return; // already reconnected
+  var c=getCt(pid);if(!c)return;
+  try{
+    var conn=S.peer.connect(pid,{reliable:true,metadata:{name:S.name,avatar:S.avatar}});
+    wireConn(conn,c.name,c.avatar);
+  }catch(e){}
+}
+
+// Message queue — hold messages sent while disconnected
+var _msgQueue={};
+function queueMsg(pid,obj){
+  if(!_msgQueue[pid])_msgQueue[pid]=[];
+  _msgQueue[pid].push(obj);
+}
+function flushQueue(pid){
+  var q=_msgQueue[pid];if(!q||!q.length)return;
+  var conn=S.conns[pid];if(!conn||!conn.open)return;
+  q.forEach(function(obj){try{conn.send(obj);}catch(e){}});
+  _msgQueue[pid]=[];
 }
 function connectViaBurner(token,fromName){
   var burnerId='flint-invite-'+token;
@@ -1491,7 +1546,16 @@ function onDirectData(pid,data){
   if(data.type==='vm-start'||data.type==='vm-chunk'||data.type==='vm-end')onVmData(pid,data,false,null);
   onFileData(pid,data,false,null);
 }
-function sendDirect(pid,obj){var c=S.conns[pid];if(c&&c.open){c.send(obj);return true;}return false;}
+function sendDirect(pid,obj){
+  var c=S.conns[pid];
+  if(c&&c.open){c.send(obj);return true;}
+  // Connection down — try to reconnect and queue if it's a real message
+  if(obj&&obj.type==='msg'){
+    queueMsg(pid,obj);
+    tryReconnect(pid);
+  }
+  return false;
+}
 
 // ── Typing ────────────────────────────────────────────────────────────────────
 var TTHROTTLE=2000,lastTyped={};
@@ -1874,7 +1938,10 @@ function sendMsg(ctx){
     S.convos[S.selId].push({f:'m',t:t,ts:ts(),id:msgId,read:false,reactions:{}});
     var c=getCt(S.selId);if(c)c.last=t;
     ta.value='';ta.style.height='auto';renderDirect(S.selId);renderList();save();
-    if(!sendDirect(S.selId,{type:'msg',text:t,id:msgId})){S.convos[S.selId].push({f:'sys',t:'Not connected — they may be offline'});renderDirect(S.selId);}
+    if(!sendDirect(S.selId,{type:'msg',text:t,id:msgId})){
+      // Message queued — will send when they reconnect
+      showToast('Queued — will send when reconnected',3000);
+    }
   }
 }
 
@@ -2047,11 +2114,10 @@ document.addEventListener('visibilitychange',function(){
     try{S.peer.reconnect();}catch(e){setTimeout(initPeer,1000);}
     return;
   }
-  // Re-attempt connections to saved contacts that went offline
+  // Re-attempt data channel to ALL known contacts that went offline
   S.contacts.forEach(function(c){
-    if(c.pinned&&c.status==='off'&&(!S.conns[c.id]||!S.conns[c.id].open)){
-      // Silent reconnect attempt — don't show toast for each one
-      try{wireConn(S.peer.connect(c.id,{reliable:true,metadata:{name:S.name,avatar:S.avatar}}));}catch(e){}
+    if(c.status==='off'&&(!S.conns[c.id]||!S.conns[c.id].open)){
+      tryReconnect(c.id);
     }
   });
 });

@@ -1450,10 +1450,11 @@ function wireConn(conn,name,avatar){
   conn.on('open',function(){
     var nm=(conn.metadata&&conn.metadata.name)?conn.metadata.name:(name||pid.slice(0,10));
     var av=(conn.metadata&&conn.metadata.avatar)?conn.metadata.avatar:(avatar||'⚡');
+    resetReconnAttempts(pid); // clear backoff on success
     addContact(pid,nm,av,'on');
     conn.send({type:'hello',name:S.name,avatar:S.avatar});
-    showToast('Connected to '+nm,3000);
-    // Resend any unread queued messages
+    // Only toast on first connect, not every auto-reconnect
+    if(!getCt(pid)||getCt(pid).status==='off')showToast('Connected to '+nm,2500);
     flushQueue(pid);
   });
   conn.on('data',function(d){onDirectData(pid,d);});
@@ -1470,19 +1471,30 @@ function wireConn(conn,name,avatar){
 
 // Reconnect timers per peer
 var _reconnTimers={};
+var _reconnAttempts={};
 function scheduleReconnect(pid){
-  // Only reconnect to known contacts, not strangers
   if(!getCt(pid))return;
   clearTimeout(_reconnTimers[pid]);
+  if(!_reconnAttempts[pid])_reconnAttempts[pid]=0;
+  _reconnAttempts[pid]++;
+  // Exponential backoff: 3s, 6s, 12s, max 30s
+  var delay=Math.min(3000*Math.pow(2,_reconnAttempts[pid]-1),30000);
   _reconnTimers[pid]=setTimeout(function(){
     tryReconnect(pid);
-  },3000); // wait 3s before retrying
+  },delay);
+}
+function resetReconnAttempts(pid){
+  _reconnAttempts[pid]=0;
+  clearTimeout(_reconnTimers[pid]);
 }
 
 function tryReconnect(pid){
   if(!S.peer||S.peer.destroyed||S.peer.disconnected)return;
-  if(S.conns[pid]&&S.conns[pid].open)return; // already reconnected
+  if(S.conns[pid]&&S.conns[pid].open)return;
   var c=getCt(pid);if(!c)return;
+  // Only the peer with the lower ID initiates reconnect — prevents collision
+  // where both sides try to connect simultaneously and both fail
+  if(S.peerId&&pid&&S.peerId>pid)return; // other side will initiate
   try{
     var conn=S.peer.connect(pid,{reliable:true,metadata:{name:S.name,avatar:S.avatar}});
     wireConn(conn,c.name,c.avatar);
@@ -1531,7 +1543,12 @@ function connectViaBurner(token,fromName){
 
 function onDirectData(pid,data){
   if(!data||!data.type)return;
-  if(data.type==='hello')addContact(pid,data.name||getName(pid),data.avatar||'⚡','on');
+  if(data.type==='ping')return; // keepalive ping — ignore
+  if(data.type==='hello'){
+    addContact(pid,data.name||getName(pid),data.avatar||'⚡','on');
+    resetReconnAttempts(pid);
+    flushQueue(pid);
+  }
   if(data.type==='msg'){
     if(!S.convos[pid])S.convos[pid]=[];
     S.convos[pid].push({f:'t',t:data.text,ts:ts(),id:data.id||uid(),reactions:{}});
@@ -2114,9 +2131,17 @@ document.addEventListener('visibilitychange',function(){
     try{S.peer.reconnect();}catch(e){setTimeout(initPeer,1000);}
     return;
   }
-  // Re-attempt data channel to ALL known contacts that went offline
+  // Re-attempt data channel to ALL known contacts
+  // Also ping any "open" connections that may have silently died
   S.contacts.forEach(function(c){
-    if(c.status==='off'&&(!S.conns[c.id]||!S.conns[c.id].open)){
+    var conn=S.conns[c.id];
+    if(conn&&conn.open){
+      // Send a ping to verify channel is truly alive
+      try{conn.send({type:'ping'});}catch(e){
+        updStatus(c.id,'off');
+        scheduleReconnect(c.id);
+      }
+    } else {
       tryReconnect(c.id);
     }
   });

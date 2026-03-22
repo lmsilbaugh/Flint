@@ -29,20 +29,6 @@ button{font-family:var(--sans);cursor:pointer}
 .scr{position:fixed;inset:0;display:none;z-index:1}
 .scr.on{display:flex}
 
-/* ── setup ── */
-#setup{align-items:center;justify-content:center}
-.card{width:320px;max-width:90vw;background:var(--s1);border:1px solid var(--bd2);border-radius:var(--r3);padding:28px}
-.logo-row{display:flex;align-items:center;gap:9px;margin-bottom:22px}
-.logo-icon{width:30px;height:30px;border-radius:7px;background:var(--tx);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.logo-name{font-size:18px;font-weight:700;letter-spacing:-.3px}
-.logo-tag{font-family:var(--mono);font-size:9px;color:var(--tx3);letter-spacing:.08em;text-transform:uppercase;margin-top:1px}
-.card h2{font-size:15px;font-weight:600;margin-bottom:4px}
-.card p{font-size:12px;color:var(--tx2);margin-bottom:20px;line-height:1.6}
-.lbl{display:block;font-family:var(--mono);font-size:9px;color:var(--tx3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px}
-.inp{width:100%;background:var(--s2);border:1px solid var(--bd2);border-radius:var(--r);padding:9px 12px;color:var(--tx);font-family:var(--sans);font-size:14px;outline:none;margin-bottom:12px;transition:border .15s}
-.inp:focus{border-color:var(--bd3)}.inp::placeholder{color:var(--tx3)}
-.pbtn{width:100%;background:var(--tx);color:var(--bg);border:none;border-radius:var(--r);padding:11px;font-size:14px;font-weight:600}
-
 /* ── app shell ── */
 #app{align-items:stretch}
 .app-inner{flex:1;display:flex;flex-direction:column;height:100%;min-height:0;width:100%}
@@ -57,6 +43,22 @@ button{font-family:var(--sans);cursor:pointer}
 .strip-r{display:flex;gap:5px;align-items:center}
 .sico{width:26px;height:26px;border-radius:50%;background:none;border:none;color:var(--tx3);font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .12s}
 .sico:hover{background:var(--s2);color:var(--tx2)}
+
+/* ── inline name entry ── */
+.name-entry{display:flex;flex-direction:column;align-items:center;gap:0;margin-top:18px;width:100%;animation:fmIn .4s .1s cubic-bezier(.22,1,.36,1) both}
+.name-row{display:flex;align-items:center;gap:0;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:30px;overflow:hidden;width:220px;transition:border .2s,box-shadow .2s}
+.name-row:focus-within{border-color:rgba(139,92,246,.4);box-shadow:0 0 0 3px rgba(139,92,246,.08)}
+.name-inp{flex:1;background:none;border:none;outline:none;color:var(--tx);font-family:var(--mono);font-size:13px;padding:10px 16px;letter-spacing:.04em;min-width:0}
+.name-inp::placeholder{color:var(--tx3)}
+.name-go{width:36px;height:36px;border-radius:50%;background:rgba(139,92,246,.2);border:none;color:#a78bfa;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin:2px 2px 2px 0;cursor:pointer;transition:all .15s}
+.name-go:hover{background:rgba(139,92,246,.4);color:#e9d5ff}
+.name-hint{font-family:var(--mono);font-size:9px;color:var(--tx3);letter-spacing:.1em;margin-top:8px;text-transform:uppercase}
+
+/* fade transition */
+@keyframes fadeOut{to{opacity:0;transform:scale(.97)}}
+@keyframes fadeIn{from{opacity:0;transform:scale(1.02)}to{opacity:1;transform:scale(1)}}
+.fading-out{animation:fadeOut .35s ease-out forwards}
+.fading-in{animation:fadeIn .4s .15s ease-out both}
 
 /* ── presence zone ── */
 .presence{flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;padding:32px 0 20px;position:relative}
@@ -332,21 +334,6 @@ button{font-family:var(--sans);cursor:pointer}
 </head>
 <body>
 
-<!-- SETUP -->
-<div id="setup" class="scr">
-  <div class="card">
-    <div class="logo-row">
-      <div class="logo-icon"><svg width="17" height="17" viewBox="0 0 26 26"><polygon points="13,2 16,10 23,8 15,15 18,23 12,16 4,19 8,10" fill="#09090b"/></svg></div>
-      <div><div class="logo-name">Flint</div><div class="logo-tag">Private P2P</div></div>
-    </div>
-    <h2>What should we call you?</h2>
-    <p>No account. No server. Just your name.</p>
-    <label class="lbl">Display name</label>
-    <input class="inp" id="setup-name" type="text" placeholder="Your name..." maxlength="32" onkeydown="if(event.key==='Enter')enterApp()">
-    <button class="pbtn" onclick="enterApp()">Enter Flint</button>
-  </div>
-</div>
-
 <!-- APP — THE LENS -->
 <div id="app" class="scr">
   <div class="app-inner" id="lens">
@@ -542,7 +529,7 @@ var S={
   typingTimers:{},roomTyping:{},recorder:null,recChunks:[],
   msgQueue:{},reply:null,lastMyMsgId:null
 };
-var BURNER=null,_pInit=false,_kaTimer=null,_reconnTimers={},PICKER_ID=null;
+var BURNER=null,_pInit=false,_kaTimer=null,_reconnTimers={},PICKER_ID=null,_skipMark=false;
 
 // ── utils ──────────────────────────────────────────────────────────
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
@@ -596,13 +583,53 @@ function checkHash(){
   if(h.startsWith('#join=')){try{var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));sessionStorage.setItem('fi',JSON.stringify(d));history.replaceState(null,'',location.pathname);}catch(e){}}
   else if(h.startsWith('#room=')){try{var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));sessionStorage.setItem('fr',JSON.stringify(d));history.replaceState(null,'',location.pathname);}catch(e){}}
 }
-function goSetup(){checkHash();if(load()&&S.name&&S.name!=='Anonymous'){launchApp();}else{show('setup');setTimeout(function(){document.getElementById('setup-name').focus();},100);}}
-function enterApp(){S.name=document.getElementById('setup-name').value.trim()||'Anonymous';save();launchApp();}
+function goSetup(){checkHash();show('app');if(load()&&S.name&&S.name!=='Anonymous'){launchApp();}else{showEmpty();}}
+function enterApp(){}
 function launchApp(){
   var btn=document.getElementById('myav-btn');
   btn.style.cssText='width:26px;height:26px;border-radius:50%;font-size:12px;font-weight:700;background:'+avColor(S.name)+';color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center';
   btn.textContent=S.name[0].toUpperCase();
   showEmpty();show('app');renderDock();
+  initPeer();startKeepalive();setupDrop();setupKb();
+}
+
+function launchAppSmooth(){
+  // Update myav button
+  var btn=document.getElementById('myav-btn');
+  btn.style.cssText='width:26px;height:26px;border-radius:50%;font-size:12px;font-weight:700;background:'+avColor(S.name)+';color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center';
+  btn.textContent=S.name[0].toUpperCase();
+
+  // Remove just the name-entry box — mark stays visible
+  var entry=document.getElementById('name-entry');
+  if(entry){
+    entry.style.transition='opacity .25s ease, transform .25s ease';
+    entry.style.opacity='0';
+    entry.style.transform='translateY(-8px)';
+    setTimeout(function(){entry.remove();},260);
+  }
+
+  // Fade the mark back to full opacity (submitName may have started fading it)
+  var mark=document.getElementById('av-wrap');
+  if(mark){
+    mark.style.transition='opacity .3s ease';
+    mark.style.opacity='1';
+  }
+
+  // Slide dock in from below
+  var dock=document.getElementById('dock');
+  if(dock){
+    dock.style.transition='none';
+    dock.style.transform='translateY(24px)';
+    dock.style.opacity='0';
+    requestAnimationFrame(function(){
+      dock.style.transition='transform .45s cubic-bezier(.22,1,.36,1), opacity .35s ease';
+      dock.style.transform='translateY(0)';
+      dock.style.opacity='1';
+    });
+  }
+
+  // Wire everything up silently
+  renderDock();
   initPeer();startKeepalive();setupDrop();setupKb();
 }
 
@@ -618,24 +645,19 @@ function showEmpty(){
 }
 
 function setFlintMark(){
+  if(_skipMark)return;
   var existing=document.getElementById('av-wrap');
-  // Flint electric field: logo + orbit system + wordmark
   var html='<div class="flint-mark" id="av-wrap">'
     +'<div class="flint-field">'
-      // plasma atmosphere
       +'<div class="ff-plasma"></div>'
       +'<div class="ff-plasma2"></div>'
       +'<div class="ff-plasma3"></div>'
-      // inner glow
       +'<div class="ff-glow"></div>'
-      // arc field lines
       +'<div class="ff-arc"></div>'
       +'<div class="ff-arc2"></div>'
-      // orbiting sparks
       +'<div class="ff-orbit"><div class="ff-spark"></div></div>'
       +'<div class="ff-orbit2"><div class="ff-spark2"></div></div>'
       +'<div class="ff-orbit3"><div class="ff-spark3"></div></div>'
-      // Flint logo mark — star/bolt hybrid (matches godsperspective.com logo)
       +'<div class="ff-logo">'
         +'<svg width="80" height="80" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">'
           +'<defs>'
@@ -653,18 +675,46 @@ function setFlintMark(){
         +'</svg>'
       +'</div>'
     +'</div>'
-    // wordmark
-    +'<div class="ff-wordmark">FLINT</div>'
-    
-    +'</div>';
+    +'<div class="ff-wordmark">FLINT</div>';
 
+  // If no name yet, inject inline name input
+  if(!S.name||S.name==='Anonymous'){
+    html+='<div class="name-entry" id="name-entry">'
+      +'<div class="name-row">'
+        +'<input class="name-inp" id="name-inp" type="text" placeholder="Your name..." maxlength="32" autocomplete="off" spellcheck="false">'
+        +'<button class="name-go" onclick="submitName()">&#10148;</button>'
+      +'</div>'
+      +'<div class="name-hint">No account &middot; No server</div>'
+    +'</div>';
+  }
+
+  html+='</div>';
   if(existing)existing.outerHTML=html;
-  // clear name/meta — wordmark is inside the mark itself
+
+  // wire enter key
+  setTimeout(function(){
+    var inp=document.getElementById('name-inp');
+    if(inp){
+      inp.focus();
+      inp.onkeydown=function(e){if(e.key==='Enter')submitName();};
+    }
+  },50);
+
   var pname=document.getElementById('p-name');if(pname)pname.textContent='';
   var pmeta=document.getElementById('p-meta');if(pmeta)pmeta.style.display='none';
   var pdot=document.getElementById('p-dot');if(pdot)pdot.style.background='transparent';
   document.getElementById('p-btns').innerHTML='';
 }
+
+function submitName(){
+  var inp=document.getElementById('name-inp');
+  if(!inp)return;
+  var val=inp.value.trim();
+  if(!val){inp.focus();return;}
+  S.name=val;save();
+  launchAppSmooth();
+}
+
 
 function setPresence(name,sub,dotColor,avName,isGroup,groupMembers){
   var existing=document.getElementById('av-wrap');

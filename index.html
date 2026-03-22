@@ -249,7 +249,12 @@ html, body {
   width: 34px; height: 34px; border-radius: 50%;
   background: var(--c3); flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: 16px; position: relative;
+  font-size: 14px; font-weight: 700; position: relative;
+  font-family: var(--sans); letter-spacing: 0;
+}
+.msg-av {
+  font-size: 14px; font-weight: 700;
+  font-family: var(--sans);
 }
 .ctstatus {
   position: absolute; bottom: 0; right: 0;
@@ -455,9 +460,10 @@ html, body {
 .msg-row-first:hover { background: rgba(255,255,255,.02); }
 .msg-av {
   width: 36px; height: 36px; border-radius: 50%;
-  background: var(--c3); flex-shrink: 0;
+  flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px; cursor: default; margin-top: 2px;
+  font-size: 14px; font-weight: 700; cursor: default; margin-top: 2px;
+  font-family: var(--sans);
 }
 .msg-body { flex: 1; min-width: 0; }
 .msg-meta { display: flex; align-items: baseline; gap: 8px; margin-bottom: 3px; }
@@ -851,11 +857,14 @@ html, body {
 
 /* ── MOBILE ─────────────────────────────────────────────────────────────── */
 @media(max-width:640px){
-  .sb { width: 52px; overflow: hidden; flex-shrink: 0; }
+  .sb { width: 56px; overflow: hidden; flex-shrink: 0; }
   .sbsrch, .sbname, .cti, .seclbl, .ubadge, .rinfo, .rbadge, .myinf { display: none !important; }
   .ct, .ri { justify-content: center; padding: 8px 0; }
   .ctav, .rico { margin: 0 auto; }
   .addbtn { margin: 0 auto; }
+  .sbft { justify-content: center; padding: 10px 0; flex-direction: column; gap: 6px; }
+  .sbft .myav { margin: 0 auto; }
+  .sbft .icobtn { display: flex !important; margin: 0 auto; }
   .modal { width: 94vw; }
   .call-card { width: 90vw; }
   .convhd { padding: 0 12px; }
@@ -1254,6 +1263,35 @@ var openPickerId=null;
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 
+
+// ── Avatar generation — unique colored initial per name ───────────────────────
+var AVATAR_COLORS=[
+  ['#3b82f6','#1d4ed8'],['#8b5cf6','#6d28d9'],['#ec4899','#be185d'],
+  ['#f59e0b','#b45309'],['#10b981','#047857'],['#ef4444','#b91c1c'],
+  ['#06b6d4','#0e7490'],['#f97316','#c2410c'],['#84cc16','#4d7c0f'],
+  ['#a855f7','#7e22ce']
+];
+
+function nameToColor(name){
+  var n=0;for(var i=0;i<name.length;i++)n+=name.charCodeAt(i);
+  return AVATAR_COLORS[n%AVATAR_COLORS.length];
+}
+
+function avatarHtml(name,size){
+  size=size||34;
+  var initial=(name||'?')[0].toUpperCase();
+  var colors=nameToColor(name||'?');
+  return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;'
+    +'background:'+colors[0]+';display:flex;align-items:center;justify-content:center;'
+    +'font-size:'+(size*0.38)+'px;font-weight:700;color:#fff;flex-shrink:0;'
+    +'font-family:var(--sans);letter-spacing:0">'+initial+'</div>';
+}
+
+function avatarStyle(name){
+  var colors=nameToColor(name||'?');
+  return 'background:'+colors[0]+';color:#fff';
+}
+
 // ── Storage ───────────────────────────────────────────────────────────────────
 function save(){
   try{
@@ -1339,7 +1377,19 @@ function checkHash(){
 function bootNote(t){var el=document.createElement('div');el.className='bl w';el.style.animationDelay='0ms';el.textContent='  ◆  '+t;document.getElementById('boot-lines').appendChild(el);}
 function goSetup(){if(load()&&S.name&&S.name!=='Anonymous'){launchApp();return;}show('setup');setTimeout(function(){document.getElementById('setup-name').focus();},100);}
 function enterApp(){S.name=document.getElementById('setup-name').value.trim()||'Anonymous';save();launchApp();}
-function launchApp(){document.getElementById('myav').textContent=S.avatar;document.getElementById('mynm').textContent=S.name;show('app');renderList();initPeer();checkNotifPermission();}
+function launchApp(){
+  var myEl=document.getElementById('myav');
+  if(myEl){
+    var colors=nameToColor(S.name||'?');
+    myEl.textContent=(S.name||'?')[0].toUpperCase();
+    myEl.style.background=colors[0];
+    myEl.style.color='#fff';
+    myEl.style.fontSize='14px';
+    myEl.style.fontWeight='700';
+  }
+  document.getElementById('mynm').textContent=S.name;
+  show('app');renderList();initPeer();checkNotifPermission();
+}
 
 // ── Notifications ─────────────────────────────────────────────────────────────
 function checkNotifPermission(){if(!('Notification'in window))return;if(Notification.permission==='default')setTimeout(function(){document.getElementById('notif-bar').style.display='flex';},3000);}
@@ -1392,8 +1442,18 @@ function initPeer(){
   S.peer.on('call',function(call){if(call.metadata&&call.metadata.type==='rv')handleRoomVoiceCall(call);else handleIncomingCall(call);});
   S.peer.on('disconnected',function(){setNet('Reconnecting...',false);setTimeout(function(){if(S.peer&&!S.peer.destroyed)S.peer.reconnect();},1000);});
   S.peer.on('error',function(err){
-    if(err&&err.type==='unavailable-id'){S.myPeerId='flint-'+Math.random().toString(36).slice(2,10);localStorage.setItem('flint_pid',S.myPeerId);}
-    setNet('Error — retrying...',false);setTimeout(initPeer,4000);
+    if(_resetting)return; // intentional reset — suppress error display
+    if(err&&err.type==='unavailable-id'){
+      S.myPeerId='flint-'+Math.random().toString(36).slice(2,10);
+      localStorage.setItem('flint_pid',S.myPeerId);
+    }
+    if(err&&err.type==='network'){
+      setNet('No network...',false);
+      setTimeout(function(){if(!_resetting)initPeer();},4000);
+    } else {
+      setNet('Reconnecting...',false);
+      setTimeout(function(){if(!_resetting)initPeer();},4000);
+    }
   });
   startKeepalive();
 }
@@ -1455,12 +1515,13 @@ function wireConn(conn,name,avatar){
   conn.on('open',function(){
     var nm=(conn.metadata&&conn.metadata.name)?conn.metadata.name:(name||pid.slice(0,10));
     var av=(conn.metadata&&conn.metadata.avatar)?conn.metadata.avatar:(avatar||'⚡');
-    resetReconnAttempts(pid); // clear backoff on success
+    resetReconnAttempts(pid);
+    var existed=getCt(pid)&&getCt(pid).status==='on';
     addContact(pid,nm,av,'on');
     conn.send({type:'hello',name:S.name,avatar:S.avatar});
-    // Only toast on first connect, not every auto-reconnect
-    if(!getCt(pid)||getCt(pid).status==='off')showToast('Connected to '+nm,2500);
+    if(!existed)showToast('Connected to '+nm,2500);
     flushQueue(pid);
+    if(S.selId===pid)renderDirect(pid);
   });
   conn.on('data',function(d){onDirectData(pid,d);});
   conn.on('close',function(){
@@ -1828,10 +1889,12 @@ function renderDirect(pid){
     var mid=m.id||uid();
 
     if(senderKey!==lastSender){
-      var av=isMe?S.avatar:(c?c.avatar:'⚡');
       var nm=isMe?S.name:(c?c.name:'Unknown');
+      var avName=isMe?S.name:(c?c.name:'?');
+      var avColors=nameToColor(avName);
+      var avInitial=avName[0].toUpperCase();
       h+='<div class="msg-row-first">'
-        +'<div class="msg-av">'+esc(av)+'</div>'
+        +'<div class="msg-av" style="background:'+avColors[0]+';color:#fff">'+avInitial+'</div>'
         +'<div class="msg-body">'
         +'<div class="msg-meta"><span class="msg-name'+(isMe?' me':'')+'">'+esc(nm)+'</span><span class="msg-ts">'+m.ts+'</span></div>'
         +'<div class="mwrap"><div class="msg-cont">'+linkify(m.t)+'</div>'
@@ -1875,7 +1938,7 @@ function renderRoom(rid){
 
     if(m.from!==lastFrom){
       h+='<div class="msg-row-first">'
-        +'<div class="msg-av">'+(m.av||'⚡')+'</div>'
+        +'<div class="msg-av" style="background:'+nameToColor(m.name||'?')[0]+';color:#fff">'+( m.name||'?')[0].toUpperCase()+'</div>'
         +'<div class="msg-body">'
         +'<div class="msg-meta"><span class="msg-name'+(isMe?' me':'')+'">'+esc(m.name||'Unknown')+'</span><span class="msg-ts">'+m.ts+'</span></div>'
         +'<div class="mwrap"><div class="msg-cont">'+linkify(m.t)+'</div>'
@@ -1905,7 +1968,7 @@ function openConvo(pid){
   var c=getCt(pid);if(c)c.unread=0;
   renderList(document.getElementById('srch').value);hideAll();
   document.getElementById('direct-chat').style.display='flex';S.activeView='direct';
-  document.getElementById('dch-av').textContent=c?c.avatar:'⚡';
+  if(c){var dColors=nameToColor(c.name||'?');var dAv=document.getElementById('dch-av');dAv.textContent=c.name[0].toUpperCase();dAv.style.background=dColors[0];dAv.style.color='#fff';dAv.style.fontSize='15px';dAv.style.fontWeight='700';}
   document.getElementById('dch-name').textContent=c?c.name:'—';
   document.getElementById('dch-id').textContent=pid;
   document.getElementById('call-av').textContent=c?c.avatar:'⚡';
@@ -1957,9 +2020,10 @@ function sendMsg(ctx){
     S.convos[S.selId].push({f:'m',t:t,ts:ts(),id:msgId,read:false,reactions:{}});
     var c=getCt(S.selId);if(c)c.last=t;
     ta.value='';ta.style.height='auto';renderDirect(S.selId);renderList();save();
-    if(!sendDirect(S.selId,{type:'msg',text:t,id:msgId})){
-      // Message queued — will send when they reconnect
-      showToast('Queued — will send when reconnected',3000);
+    var obj={type:'msg',text:t,id:msgId};
+    if(!sendDirect(S.selId,obj)){
+      // Auto-queued — will flush when reconnected
+      showToast('Will send when reconnected',2500);
     }
   }
 }
@@ -2018,12 +2082,40 @@ function ficon(n){var e=(n||'').split('.').pop().toLowerCase();var m={pdf:'📄'
 
 // ── Contacts & list ───────────────────────────────────────────────────────────
 function addContact(pid,name,avatar,status){
+  // Remove any duplicate entries for this pid first
+  var dupes=S.contacts.filter(function(x){return x.id===pid;});
+  if(dupes.length>1){
+    // Keep the one with most data, remove rest
+    S.contacts=S.contacts.filter(function(x,i){
+      if(x.id!==pid)return true;
+      return i===S.contacts.indexOf(dupes[0]);
+    });
+  }
   var c=getCt(pid);
-  if(c){c.name=name;c.avatar=avatar;c.status=status;if(c.pinned&&!S.convos[pid])S.convos[pid]=[];}
-  else{S.contacts.unshift({id:pid,name:name,avatar:avatar,status:status,last:'Connected',unread:0,pinned:false});S.convos[pid]=S.convos[pid]||[];}
+  if(c){
+    c.name=name;c.avatar=avatar;c.status=status;
+    if(c.pinned&&!S.convos[pid])S.convos[pid]=[];
+  } else {
+    S.contacts.unshift({id:pid,name:name,avatar:avatar,status:status,last:'Connected',unread:0,pinned:false});
+    S.convos[pid]=S.convos[pid]||[];
+  }
   renderList();save();
 }
-function updStatus(pid,st){var c=getCt(pid);if(c){c.status=st;renderList();}}
+function updStatus(pid,st){
+  var c=getCt(pid);
+  if(!c)return;
+  var wasOff=c.status!=='on';
+  c.status=st;
+  if(st==='on'&&wasOff){
+    // Contact came back online — flush any queued messages
+    flushQueue(pid);
+    // If we have queued messages that just sent, update their receipt
+    renderList();
+    if(S.selId===pid)renderDirect(pid);
+  } else {
+    renderList();
+  }
+}
 function getCt(pid){return S.contacts.find(function(x){return x.id===pid;});}
 function getName(pid){var c=getCt(pid);return c?c.name:pid.slice(0,10);}
 
@@ -2054,7 +2146,7 @@ function renderList(filter){
 
 function ctHtml(c){
   return '<div class="ct '+(S.selId===c.id?'sel':'')+'" onclick="openConvo(\''+c.id+'\')">'
-    +'<div class="ctav">'+esc(c.avatar)+'<div class="ctstatus '+(c.status==='on'?'on':'')+'"></div></div>'
+    +'<div class="ctav" style="background:'+nameToColor(c.name||'?')[0]+';color:#fff">'+( c.name||'?')[0].toUpperCase()+'<div class="ctstatus '+(c.status==='on'?'on':'')+'"></div></div>'
     +'<div class="cti"><div class="ctn">'+esc(c.name)+(c.pinned?' <span style="color:var(--yellow);font-size:9px">★</span>':'')+'</div>'
     +'<div class="cts">'+esc(c.last||'').slice(0,30)+'</div></div>'
     +(c.unread?'<div class="ubadge">'+c.unread+'</div>':'')
@@ -2128,22 +2220,28 @@ function markDead(pid){
   updStatus(pid,'off');
 }
 
-// Full nuclear reset — destroy peer entirely and reinitialise
-// This is the only reliable fix for mobile backgrounding
+// Full reset — destroy peer and reinitialise cleanly
+var _resetting=false;
 function hardReset(){
+  if(_resetting)return;
+  _resetting=true;
   setNet('Reconnecting...',false);
-  // Close all existing connections cleanly
+  // Mark all contacts offline but keep their data
   Object.keys(S.conns).forEach(function(pid){
     try{S.conns[pid].close();}catch(e){}
     updStatus(pid,'off');
   });
   S.conns={};
-  // Destroy the peer
-  if(S.peer){try{S.peer.destroy();}catch(e){}S.peer=null;}
-  // Reinitialise after short delay
+  // Destroy peer silently
+  if(S.peer){
+    S.peer.removeAllListeners&&S.peer.removeAllListeners();
+    try{S.peer.destroy();}catch(e){}
+    S.peer=null;
+  }
   setTimeout(function(){
+    _resetting=false;
     initPeer();
-  },800);
+  },1000);
 }
 
 // On visibility change — if we were backgrounded, do a full reset

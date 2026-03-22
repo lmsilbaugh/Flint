@@ -1483,12 +1483,15 @@ function buildInvLink(){
   S_burnerToken=token;
 
   try{
+    // Use explicit PeerJS cloud server for burner — avoids conflict with main peer
     S_burner=new Peer(burnerId,{
+      host:'0.peerjs.com',
+      port:443,
+      path:'/',
+      secure:true,
       config:{iceServers:[
         {urls:'stun:stun.l.google.com:19302'},
-        {urls:'stun:stun1.l.google.com:19302'},
-        {urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'],
-         username:'openrelayproject',credential:'openrelayproject'}
+        {urls:'stun:stun1.l.google.com:19302'}
       ]}
     });
   }catch(e){
@@ -1611,7 +1614,13 @@ function flushQueue(pid){
 function connectViaBurner(token,fromName){
   var burnerId='flint-invite-'+token;
   showToast('Connecting to '+fromName+'...');
-  var conn=S.peer.connect(burnerId,{reliable:true,metadata:{name:S.name,avatar:S.avatar}});
+  // Connect via same explicit server the burner was created on
+  var tempPeer=new Peer(undefined,{
+    host:'0.peerjs.com',port:443,path:'/',secure:true,
+    config:{iceServers:[{urls:'stun:stun.l.google.com:19302'}]}
+  });
+  tempPeer.on('open',function(){
+    var conn=tempPeer.connect(burnerId,{reliable:true,metadata:{name:S.name,avatar:S.avatar}});
   conn.on('open',function(){
     // Joiner initiates — send our real ID to the host immediately on open
     try{conn.send({type:'id-hello',realId:S.peerId,name:S.name,avatar:S.avatar});}catch(e){}
@@ -1622,18 +1631,24 @@ function connectViaBurner(token,fromName){
       var theirRealId=d.realId,theirName=d.name||fromName,theirAvatar=d.avatar||'⚡';
       setTimeout(function(){
         try{conn.close();}catch(e){}
+        try{tempPeer.destroy();}catch(e){}
         connectTo(theirRealId,theirName,theirAvatar);
       },200);
     }
   });
-  conn.on('error',function(e){
-    if(e&&(e.type==='peer-unavailable'||String(e).includes('unavailable'))){
-      showToast('Invite link expired or already used',3000);
-    } else {
-      showToast('Connection failed — try again',3000);
-    }
+    conn.on('error',function(e){
+      try{tempPeer.destroy();}catch(ex){}
+      if(e&&(e.type==='peer-unavailable'||String(e).includes('unavailable'))){
+        showToast('Invite link expired or already used',3000);
+      } else {
+        showToast('Connection failed — try again',3000);
+      }
+    });
+    conn.on('close',function(){});
   });
-  conn.on('close',function(){});
+  tempPeer.on('error',function(){
+    showToast('Connection failed — try again',3000);
+  });
 }
 
 function onDirectData(pid,data){

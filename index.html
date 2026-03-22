@@ -1410,7 +1410,7 @@ function initPeer(){
   S.peer.on('open',function(id){
     S.peerId=id;setNet('Online · '+id.slice(0,16),true);
     ['myid','my-peerid-modal','info-peerid'].forEach(function(i){document.getElementById(i).textContent=id;});
-    buildInvLink();showToast('Connected',2500);
+    showToast('Connected',2500);
     // Re-establish data channels to all known contacts after reconnect
     setTimeout(function(){
       S.contacts.forEach(function(c){
@@ -1469,22 +1469,43 @@ function destroyBurner(){
 }
 
 function buildInvLink(){
-  if(!S.peerId)return;
+  if(!S.peerId){
+    var el=document.getElementById('inv-link');
+    if(el)el.textContent='Not connected to network yet...';
+    return;
+  }
   destroyBurner();
   var el=document.getElementById('inv-link');
-  if(el)el.textContent='Generating secure link...';
+  if(el)el.textContent='Generating...';
 
   var token=Math.random().toString(36).slice(2,10);
   var burnerId='flint-invite-'+token;
   S_burnerToken=token;
-  S_burner=new Peer(burnerId,{config:{iceServers:[
-    {urls:'stun:stun.l.google.com:19302'},
-    {urls:'stun:stun1.l.google.com:19302'},
-    {urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'],username:'openrelayproject',credential:'openrelayproject'}
-  ]}});
+
+  try{
+    S_burner=new Peer(burnerId,{
+      config:{iceServers:[
+        {urls:'stun:stun.l.google.com:19302'},
+        {urls:'stun:stun1.l.google.com:19302'},
+        {urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'],
+         username:'openrelayproject',credential:'openrelayproject'}
+      ]}
+    });
+  }catch(e){
+    if(el)el.textContent='Error — try again';
+    return;
+  }
+
+  // Timeout in case burner never opens
+  var _timeout=setTimeout(function(){
+    if(!S.invLink){
+      destroyBurner();
+      if(el)el.textContent='Tap "Generate new link" to retry';
+    }
+  },8000);
 
   S_burner.on('open',function(){
-    // Build link with token only — real Peer ID never in the link
+    clearTimeout(_timeout);
     var p=btoa(encodeURIComponent(JSON.stringify({token:token,name:S.name})));
     S.invLink=location.href.split('#')[0].split('?')[0]+'#join='+p;
     var el=document.getElementById('inv-link');
@@ -1505,10 +1526,17 @@ function buildInvLink(){
     conn.on('error',function(){});
   });
 
-  S_burner.on('error',function(){
+  S_burner.on('error',function(err){
+    clearTimeout(_timeout);
     destroyBurner();
-    // Short delay then retry with new token
-    setTimeout(buildInvLink,1000);
+    var el=document.getElementById('inv-link');
+    if(err&&err.type==='unavailable-id'){
+      // Token collision — retry immediately with new token
+      S.invLink=null;
+      buildInvLink();
+    } else {
+      if(el)el.textContent='Tap "Generate new link" to retry';
+    }
   });
 }
 
@@ -2173,17 +2201,18 @@ function filterList(v){renderList(v);}
 function switchTab(tab){S.activeTab=tab;document.getElementById('tab-direct').className='sbtab'+(tab==='direct'?' on':'');document.getElementById('tab-rooms').className='sbtab'+(tab==='rooms'?' on':'');renderList();}
 function openAddForTab(){if(S.activeTab==='rooms')openCreateRoom();else openAdd();}
 function openAdd(){
+  S.invLink=null; // clear any stale link
   document.getElementById('invite-modal').classList.add('on');
   var el=document.getElementById('inv-link');
+  if(el)el.textContent='Generating...';
   if(S.peerId){
-    // buildInvLink is async — it sets the link text itself when the burner peer opens
     buildInvLink();
   } else {
     if(el)el.textContent='Connecting to network...';
     var poll=setInterval(function(){
       if(S.peerId){clearInterval(poll);buildInvLink();}
-    },500);
-    setTimeout(function(){clearInterval(poll);},15000);
+    },300);
+    setTimeout(function(){clearInterval(poll);if(!S.invLink&&el)el.textContent='Not connected — check your internet';},10000);
   }
 }
 function openCreateRoom(){S.newRoomType='text';selType('text');document.getElementById('room-name-inp').value='';document.getElementById('room-modal').classList.add('on');setTimeout(function(){document.getElementById('room-name-inp').focus();},100);}

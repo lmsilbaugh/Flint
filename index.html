@@ -1361,12 +1361,17 @@ function initPeer(){
     S.peerId=id;setNet('Online · '+id.slice(0,16),true);
     ['myid','my-peerid-modal','info-peerid'].forEach(function(i){document.getElementById(i).textContent=id;});
     buildInvLink();showToast('Connected',2500);
-    // Re-establish data channels to all known contacts after signaling reconnect
+    // Re-establish data channels to all known contacts after reconnect
     setTimeout(function(){
       S.contacts.forEach(function(c){
-        if(!S.conns[c.id]||!S.conns[c.id].open)tryReconnect(c.id);
+        if(!S.conns[c.id]||!S.conns[c.id].open){
+          try{
+            var conn=S.peer.connect(c.id,{reliable:true,metadata:{name:S.name,avatar:S.avatar}});
+            wireConn(conn,c.name,c.avatar);
+          }catch(e){}
+        }
       });
-    },1500);
+    },1200);
     var pi=sessionStorage.getItem('fi');
     if(pi){
       sessionStorage.removeItem('fi');
@@ -1492,9 +1497,6 @@ function tryReconnect(pid){
   if(!S.peer||S.peer.destroyed||S.peer.disconnected)return;
   if(S.conns[pid]&&S.conns[pid].open)return;
   var c=getCt(pid);if(!c)return;
-  // Only the peer with the lower ID initiates reconnect — prevents collision
-  // where both sides try to connect simultaneously and both fail
-  if(S.peerId&&pid&&S.peerId>pid)return; // other side will initiate
   try{
     var conn=S.peer.connect(pid,{reliable:true,metadata:{name:S.name,avatar:S.avatar}});
     wireConn(conn,c.name,c.avatar);
@@ -2103,48 +2105,71 @@ function showToast(msg,dur){var t=document.getElementById('toast');document.getE
 
 if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
 
-// ── Keepalive — prevent signaling server dropping session ─────────────────────
+// ── Keepalive + full reconnect on visibility ─────────────────────────────────
 var _kaTimer=null;
+var _lastVisible=Date.now();
+
 function startKeepalive(){
   clearInterval(_kaTimer);
   _kaTimer=setInterval(function(){
-    if(S.peer&&!S.peer.destroyed){
-      if(S.peer.disconnected){
-        setNet('Reconnecting...',false);
-        try{S.peer.reconnect();}catch(e){}
-      }
-    }
-  },25000);
+    if(document.visibilityState!=='visible')return;
+    if(!S.peer||S.peer.destroyed){hardReset();return;}
+    if(S.peer.disconnected){try{S.peer.reconnect();}catch(e){hardReset();}}
+    // Ping all open connections to detect silently dead channels
+    S.contacts.forEach(function(c){
+      var conn=S.conns[c.id];
+      if(conn&&conn.open){try{conn.send({type:'ping'});}catch(e){markDead(c.id);}}
+    });
+  },20000);
 }
 
-// ── Visibility change — reconnect instantly when user returns ─────────────────
-document.addEventListener('visibilitychange',function(){
-  if(document.visibilityState!=='visible')return;
-  if(!S.peer)return;
-  if(S.peer.destroyed){
-    showToast('Reconnecting...',2000);
-    setTimeout(initPeer,500);
-    return;
-  }
-  if(S.peer.disconnected){
-    setNet('Reconnecting...',false);
-    try{S.peer.reconnect();}catch(e){setTimeout(initPeer,1000);}
-    return;
-  }
-  // Re-attempt data channel to ALL known contacts
-  // Also ping any "open" connections that may have silently died
-  S.contacts.forEach(function(c){
-    var conn=S.conns[c.id];
-    if(conn&&conn.open){
-      // Send a ping to verify channel is truly alive
-      try{conn.send({type:'ping'});}catch(e){
-        updStatus(c.id,'off');
-        scheduleReconnect(c.id);
-      }
-    } else {
-      tryReconnect(c.id);
-    }
+function markDead(pid){
+  delete S.conns[pid];
+  updStatus(pid,'off');
+}
+
+// Full nuclear reset — destroy peer entirely and reinitialise
+// This is the only reliable fix for mobile backgrounding
+function hardReset(){
+  setNet('Reconnecting...',false);
+  // Close all existing connections cleanly
+  Object.keys(S.conns).forEach(function(pid){
+    try{S.conns[pid].close();}catch(e){}
+    updStatus(pid,'off');
   });
+  S.conns={};
+  // Destroy the peer
+  if(S.peer){try{S.peer.destroy();}catch(e){}S.peer=null;}
+  // Reinitialise after short delay
+  setTimeout(function(){
+    initPeer();
+  },800);
+}
+
+// On visibility change — if we were backgrounded, do a full reset
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='hidden'){
+    _lastVisible=Date.now();
+    return;
+  }
+  // We're visible again
+  var awayMs=Date.now()-_lastVisible;
+  if(!S.peer||S.peer.destroyed){
+    hardReset();
+    return;
+  }
+  if(awayMs>5000){
+    // Been away more than 5 seconds — assume connections are stale, do full reset
+    hardReset();
+  } else {
+    // Brief switch — just ping to verify
+    if(S.peer.disconnected){try{S.peer.reconnect();}catch(e){hardReset();}}
+    S.contacts.forEach(function(c){
+      var conn=S.conns[c.id];
+      if(conn&&conn.open){try{conn.send({type:'ping'});}catch(e){markDead(c.id);}}
+      else if(c.status==='on'){updStatus(c.id,'off');}
+    });
+  }
 });
 
 // ── Audio ringtone via Web Audio API ─────────────────────────────────────────

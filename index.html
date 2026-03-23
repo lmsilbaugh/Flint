@@ -1036,13 +1036,31 @@ function reconnectAll(){if(!S.peer||!S.peerReady)return;S.contacts.forEach(funct
 document.addEventListener('visibilitychange',function(){if(document.visibilityState!=='visible')return;if(!S.peer||S.peer.destroyed){if(!_pInit)initPeer();return;}if(S.peer.disconnected){try{S.peer.reconnect();}catch(e){}}else setTimeout(reconnectAll,500);});
 
 // ── burner ─────────────────────────────────────────────────────────
-function destroyBurner(){if(BURNER){try{BURNER.removeAllListeners();}catch(e){}try{BURNER.destroy();}catch(e){}BURNER=null;}S.invLink=null;}
+function destroyBurner(){
+  if(BURNER){
+    if(BURNER._kaTimer)clearInterval(BURNER._kaTimer);
+    try{BURNER.removeAllListeners();}catch(e){}
+    try{BURNER.destroy();}catch(e){}
+    BURNER=null;
+  }
+  S.invLink=null;
+}
 function buildInvLink(){
   if(!S.peerId){var el=document.getElementById('inv-link');if(el)el.textContent='Not connected yet...';return;}
   destroyBurner();var el=document.getElementById('inv-link');if(el)el.textContent='Generating...';
   var token=Math.random().toString(36).slice(2,12);BURNER=new Peer('flint-invite-'+token,PCFG);
   var _t=setTimeout(function(){destroyBurner();var el=document.getElementById('inv-link');if(el)el.textContent='Failed — tap Generate new link';},10000);
-  BURNER.on('open',function(){clearTimeout(_t);var p=btoa(encodeURIComponent(JSON.stringify({token:token,name:S.name})));S.invLink=location.href.split('#')[0].split('?')[0]+'#join='+p;var el=document.getElementById('inv-link');if(el)el.textContent=S.invLink;});
+  BURNER.on('open',function(){
+    clearTimeout(_t);
+    var p=btoa(encodeURIComponent(JSON.stringify({token:token,name:S.name})));
+    S.invLink=location.href.split('#')[0].split('?')[0]+'#join='+p;
+    var el=document.getElementById('inv-link');if(el)el.textContent=S.invLink;
+    // keep burner alive with periodic reconnect check
+    BURNER._kaTimer=setInterval(function(){
+      if(!BURNER||BURNER.destroyed){clearInterval(BURNER._kaTimer);return;}
+      if(BURNER.disconnected)try{BURNER.reconnect();}catch(e){}
+    },20000);
+  });
   BURNER.on('connection',function(conn){conn.on('data',function(d){if(d&&d.type==='id-hello'){try{conn.send({type:'id-reply',realId:S.peerId,name:S.name});}catch(e){}setTimeout(function(){destroyBurner();connectTo(d.realId,d.name||'Someone');},400);}});});
   BURNER.on('error',function(err){clearTimeout(_t);if(err&&err.type==='unavailable-id'){destroyBurner();buildInvLink();}else{destroyBurner();var el=document.getElementById('inv-link');if(el)el.textContent='Failed — tap Generate new link';}});
 }
@@ -1433,7 +1451,7 @@ function setStatus(st){S.myStatus=st;closeSheet('status-ov');save();Object.keys(
 
 // ── sheets ─────────────────────────────────────────────────────────
 function openSheet(id){document.getElementById(id).classList.add('on');}
-function closeSheet(id){document.getElementById(id).classList.remove('on');if(id==='ov-invite')destroyBurner();}
+function closeSheet(id){document.getElementById(id).classList.remove('on');}
 document.querySelectorAll('.ov').forEach(function(ov){ov.addEventListener('click',function(e){if(e.target===ov)closeSheet(ov.id);});});
 function openInvite(){S.invLink=null;document.getElementById('inv-link').textContent='Generating...';openSheet('ov-invite');if(S.peerId)buildInvLink();else{var poll=setInterval(function(){if(S.peerId){clearInterval(poll);buildInvLink();}},400);setTimeout(function(){clearInterval(poll);},15000);}}
 function openCreateRoom(){S.newRoomType='text';selRoomType('text');document.getElementById('room-nm-inp').value='';openSheet('ov-room');setTimeout(function(){document.getElementById('room-nm-inp').focus();},100);}

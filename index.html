@@ -759,10 +759,37 @@ function clearAll(){localStorage.clear();location.reload();}
 
 function checkHash(){
   var h=location.hash;
-  if(h.startsWith('#join=')){try{var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));sessionStorage.setItem('fi',JSON.stringify(d));history.replaceState(null,'',location.pathname);}catch(e){}}
-  else if(h.startsWith('#room=')){try{var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));sessionStorage.setItem('fr',JSON.stringify(d));history.replaceState(null,'',location.pathname);}catch(e){}}
+  if(!h)return;
+  if(h.startsWith('#join=')){
+    try{
+      var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));
+      sessionStorage.setItem('fi',JSON.stringify(d));
+      history.replaceState(null,'',location.pathname);
+    }catch(e){
+      // try raw parse in case btoa encoding changed
+      try{
+        var raw=decodeURIComponent(h.slice(6));
+        var d=JSON.parse(raw);
+        sessionStorage.setItem('fi',JSON.stringify(d));
+        history.replaceState(null,'',location.pathname);
+      }catch(e2){toast('Invalid invite link',3000);}
+    }
+  }else if(h.startsWith('#room=')){
+    try{
+      var d=JSON.parse(decodeURIComponent(atob(h.slice(6))));
+      sessionStorage.setItem('fr',JSON.stringify(d));
+      history.replaceState(null,'',location.pathname);
+    }catch(e){
+      toast('Invalid room link',3000);
+    }
+  }
 }
-function goSetup(){checkHash();show('app');if(load()&&S.name&&S.name!=='Anonymous'){launchApp();}else{showEmpty();}}
+function goSetup(){
+  checkHash();
+  show('app');
+  var returning=load()&&S.name&&S.name!=='Anonymous';
+  if(returning){launchApp();}else{showEmpty();}
+}
 function enterApp(){}
 function launchApp(){
   var btn=document.getElementById('myav-btn');
@@ -1052,7 +1079,10 @@ function buildInvLink(){
   var _t=setTimeout(function(){destroyBurner();var el=document.getElementById('inv-link');if(el)el.textContent='Failed — tap Generate new link';},10000);
   BURNER.on('open',function(){
     clearTimeout(_t);
-    var p=btoa(encodeURIComponent(JSON.stringify({token:token,name:S.name})));
+    var payload=JSON.stringify({token:token,name:S.name});
+    var p;
+    try{p=btoa(encodeURIComponent(payload));}
+    catch(e){p=btoa(encodeURIComponent(JSON.stringify({token:token,name:'User'})));}
     S.invLink=location.href.split('#')[0].split('?')[0]+'#join='+p;
     var el=document.getElementById('inv-link');if(el)el.textContent=S.invLink;
     // keep burner alive with periodic reconnect check
@@ -1064,7 +1094,46 @@ function buildInvLink(){
   BURNER.on('connection',function(conn){conn.on('data',function(d){if(d&&d.type==='id-hello'){try{conn.send({type:'id-reply',realId:S.peerId,name:S.name});}catch(e){}setTimeout(function(){destroyBurner();connectTo(d.realId,d.name||'Someone');},400);}});});
   BURNER.on('error',function(err){clearTimeout(_t);if(err&&err.type==='unavailable-id'){destroyBurner();buildInvLink();}else{destroyBurner();var el=document.getElementById('inv-link');if(el)el.textContent='Failed — tap Generate new link';}});
 }
-function connectViaBurner(token,fromName){var tmp=new Peer(undefined,PCFG);tmp.on('open',function(){var conn=tmp.connect('flint-invite-'+token,{reliable:true,metadata:{name:S.name}});conn.on('open',function(){try{conn.send({type:'id-hello',realId:S.peerId,name:S.name});}catch(e){}});conn.on('data',function(d){if(d&&d.type==='id-reply'){setTimeout(function(){try{conn.close();}catch(e){}try{tmp.destroy();}catch(e){}connectTo(d.realId,d.name||fromName);},200);}});conn.on('error',function(){try{tmp.destroy();}catch(e){}toast('Link expired or already used',3000);});});tmp.on('error',function(){toast('Connection failed',3000);});}
+function connectViaBurner(token,fromName){
+  toast('Connecting...',0);
+  var tmp=new Peer(undefined,PCFG);
+  tmp.on('open',function(){
+    var conn=tmp.connect('flint-invite-'+token,{reliable:true,metadata:{name:S.name}});
+    var _t=setTimeout(function(){
+      try{tmp.destroy();}catch(e){}
+      toast('Link expired — ask sender for a new one',4000);
+    },15000);
+    conn.on('open',function(){
+      try{conn.send({type:'id-hello',realId:S.peerId,name:S.name});}catch(e){}
+    });
+    conn.on('data',function(d){
+      if(d&&d.type==='id-reply'){
+        clearTimeout(_t);
+        setTimeout(function(){
+          try{conn.close();}catch(e){}
+          try{tmp.destroy();}catch(e){}
+          connectTo(d.realId,d.name||fromName);
+        },200);
+      }
+    });
+    conn.on('error',function(err){
+      clearTimeout(_t);
+      try{tmp.destroy();}catch(e){}
+      if(err&&err.type==='peer-unavailable'){
+        toast('Sender is offline or link expired',4000);
+      }else{
+        toast('Connection failed — try again',3000);
+      }
+    });
+  });
+  tmp.on('error',function(err){
+    if(err&&err.type==='peer-unavailable'){
+      toast('Sender is offline or link expired',4000);
+    }else{
+      toast('Connection failed — try again',3000);
+    }
+  });
+}
 
 // ── direct connections ─────────────────────────────────────────────
 function connectTo(pid,name){if(!pid||pid===S.peerId||S.conns[pid]&&S.conns[pid].open)return;try{wireConn(S.peer.connect(pid,{reliable:true,metadata:{name:S.name}}),name);}catch(e){}}

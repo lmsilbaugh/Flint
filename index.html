@@ -917,8 +917,14 @@ setWireTyping(false);
 function setFlintMark(){
   if(_skipMark)return;
   var existing=document.getElementById('av-wrap');
-  var html='<div class="flint-mark" id="av-wrap">'
-    +'<div class="flint-field">'
+  if(!existing)return;
+
+  // Build new flint-mark node properly (not outerHTML)
+  var mark=document.createElement('div');
+  mark.className='flint-mark';
+  mark.id='av-wrap';
+  mark.innerHTML=
+    '<div class="flint-field">'
       +'<div class="ff-plasma"></div>'
       +'<div class="ff-plasma2"></div>'
       +'<div class="ff-plasma3"></div>'
@@ -929,7 +935,7 @@ function setFlintMark(){
       +'<div class="ff-orbit2"><div class="ff-spark2"></div></div>'
       +'<div class="ff-orbit3"><div class="ff-spark3"></div></div>'
       +'<div class="ff-logo">'
-        +'<svg width="80" height="80" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">'
+        +'<svg width="80" height="80" viewBox="0 0 26 26" fill="none">'
           +'<defs>'
             +'<linearGradient id="flg" x1="0" y1="0" x2="26" y2="26" gradientUnits="userSpaceOnUse">'
               +'<stop offset="0%" stop-color="#e9d5ff"/>'
@@ -944,35 +950,32 @@ function setFlintMark(){
           +'<polygon points="13,2 16,10 23,8 15,15 18,23 12,16 4,19 8,10" fill="url(#flg)" filter="url(#fglow)"/>'
         +'</svg>'
       +'</div>'
-    +'</div>'
-    +'<div class="ff-wordmark">FLINT</div>';
+    +'</div>';
 
-  // If no name yet, inject inline name input
+  // Add name input only if no name set
   if(!S.name||S.name==='Anonymous'){
-    html+='<div class="name-entry" id="name-entry">'
-      +'<div class="name-row">'
+    var entry=document.createElement('div');
+    entry.className='name-entry';entry.id='name-entry';
+    entry.innerHTML=
+      '<div class="name-row">'
         +'<input class="name-inp" id="name-inp" type="text" placeholder="Your name..." maxlength="32" autocomplete="off" spellcheck="false">'
         +'<button class="name-go" onclick="submitName()">&#10148;</button>'
       +'</div>'
-      +'<div class="name-hint">No account &middot; No server</div>'
-    +'</div>';
+      +'<div class="name-hint">No account &middot; No server</div>';
+    mark.appendChild(entry);
   }
 
-  html+='</div>';
-  if(existing)existing.outerHTML=html;
+  existing.replaceWith(mark);
 
-  // wire enter key
+  // Wire name input
   setTimeout(function(){
     var inp=document.getElementById('name-inp');
-    if(inp){
-      inp.focus();
-      inp.onkeydown=function(e){if(e.key==='Enter')submitName();};
-    }
+    if(inp){inp.focus();inp.onkeydown=function(e){if(e.key==='Enter')submitName();};}
   },50);
 
+  // Clear name/meta
   var pname=document.getElementById('p-name');if(pname)pname.textContent='';
   var pmeta=document.getElementById('p-meta');if(pmeta)pmeta.style.display='none';
-  var pdot=document.getElementById('p-dot');if(pdot)pdot.style.background='transparent';
   document.getElementById('p-btns').innerHTML='';
 }
 
@@ -992,7 +995,6 @@ function setPresence(name,sub,dotColor,avName,isGroup,groupMembers){
     var plain=document.createElement('div');plain.className='av-wrap';plain.id='av-wrap';
     existing.replaceWith(plain);
   }
-  // also restore p-meta visibility and clear wordmark from p-name
   var pm2=document.getElementById('p-meta');if(pm2)pm2.style.display='flex';
   var wrap=document.getElementById('av-wrap');if(!wrap)return;wrap.innerHTML='';
   var ac=avColor(avName||name);

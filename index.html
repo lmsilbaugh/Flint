@@ -134,6 +134,104 @@ button{font-family:var(--sans);cursor:pointer}
 .p-btn.dim{background:transparent;border-color:transparent;color:var(--tx3);font-size:10px}
 .p-btn.dim:hover{color:var(--tx2)}
 
+
+/* ══ THE LIVING WIRE ══════════════════════════════════════════════ */
+
+/* The Wire — energy thread down the conversation center */
+.the-wire{
+  position:absolute;
+  left:50%;top:0;bottom:0;
+  width:1px;
+  transform:translateX(-50%);
+  pointer-events:none;
+  z-index:0;
+  overflow:hidden;
+  opacity:.18;
+}
+.wire-line{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to bottom,
+    transparent 0%,
+    var(--contact-color,rgba(139,92,246,.6)) 20%,
+    var(--contact-color,rgba(139,92,246,.6)) 80%,
+    transparent 100%);
+}
+.wire-pulse{
+  position:absolute;
+  left:0;right:0;
+  height:120px;
+  background:linear-gradient(to bottom,
+    transparent,
+    rgba(255,255,255,.9) 50%,
+    transparent);
+  animation:wirePulse 4s ease-in-out infinite;
+  border-radius:50%;
+}
+@keyframes wirePulse{
+  0%{top:-120px;opacity:0}
+  10%{opacity:1}
+  90%{opacity:.6}
+  100%{top:100%;opacity:0}
+}
+.wire-pulse.fast{animation-duration:1.2s}
+.wire-pulse.typing{animation-duration:.6s;opacity:1.5}
+
+/* Message heat glow — fades over 30s */
+@keyframes heatFade{
+  0%{opacity:.12}
+  60%{opacity:.06}
+  100%{opacity:0}
+}
+.m-heat{
+  position:absolute;inset:-2px;
+  border-radius:6px;
+  pointer-events:none;
+  background:radial-gradient(ellipse at center,
+    var(--contact-color,rgba(139,92,246,.15)) 0%,
+    transparent 70%);
+  animation:heatFade 30s ease-out forwards;
+  z-index:0;
+}
+.mg.mine .m-heat{
+  background:radial-gradient(ellipse at center,
+    rgba(139,92,246,.1) 0%,
+    transparent 70%);
+}
+
+/* Dock heartbeat for unread */
+@keyframes heartbeat{
+  0%,100%{box-shadow:0 0 0 0 transparent}
+  40%{box-shadow:0 0 0 4px var(--pulse-color,rgba(139,92,246,.25))}
+  60%{box-shadow:0 0 0 6px transparent}
+}
+.dk-av.unread-pulse{
+  animation:heartbeat 2s ease-in-out infinite;
+}
+
+/* Presence avatar breathe rate changes */
+.pav{transition:box-shadow .5s ease}
+.pav.breathing-fast .ring1{animation-duration:1.8s}
+.pav.breathing-fast .ring2{animation-duration:1.8s}
+
+/* Momentum spacing — messages sent rapidly sit tighter */
+.mg.rapid{margin-bottom:1px}
+.mc.rapid{margin-bottom:0px}
+
+/* Breath gap — visible pause between messages */
+.breath-gap{
+  height:24px;
+  display:flex;align-items:center;justify-content:center;
+  opacity:.15;
+}
+.breath-gap::after{
+  content:'';
+  width:20px;height:1px;
+  background:var(--contact-color,rgba(139,92,246,.4));
+  border-radius:1px;
+}
+
+/* ══════════════════════════════════════════════════════════════════ */
 /* ── ambient field ── */
 .ambient{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
 .amb-orb{position:absolute;border-radius:50%;filter:blur(80px);animation:orbdrift 18s ease-in-out infinite;opacity:0}
@@ -423,6 +521,10 @@ button{font-family:var(--sans);cursor:pointer}
       </div>
 
       <div class="msgs-outer">
+        <div class="the-wire" id="the-wire">
+          <div class="wire-line"></div>
+          <div class="wire-pulse" id="wire-pulse"></div>
+        </div>
         <div class="hdrawer" id="hdrawer">
           <div class="hd-hd"><span class="hd-title">Full history</span><button class="hd-close" onclick="closeHist()">&darr; close</button></div>
           <div id="h-msgs"></div>
@@ -716,6 +818,66 @@ function exitConvo(){
   showEmpty();
 }
 function showEmpty(){
+  var wire=document.getElementById('the-wire');if(wire)wire.style.opacity='0';
+  document.documentElement.style.removeProperty('--contact-color');
+  
+// ═══════════════════════════════════════════════
+// THE LIVING WIRE — conversation energy system
+// ═══════════════════════════════════════════════
+var _lastMsgTime=0,_msgVelocity=0,_velocityTimer=null;
+
+function setWireColor(hex){
+  var wire=document.getElementById('the-wire');
+  if(wire)wire.style.opacity=S.sel?'0.18':'0';
+}
+function pulseWire(fast){
+  var wp=document.getElementById('wire-pulse');if(!wp)return;
+  wp.style.animation='none';void wp.offsetWidth;
+  wp.style.animationDuration=fast?'1.2s':'4s';
+  wp.style.animation='wirePulse '+(fast?'1.2':'4')+'s ease-in-out infinite';
+}
+function setWireTyping(on){
+  var wp=document.getElementById('wire-pulse');if(!wp)return;
+  wp.style.animation='none';void wp.offsetWidth;
+  wp.style.animation='wirePulse '+(on?'.6':'4')+'s ease-in-out '+(on?'infinite':'infinite');
+}
+function trackMsgVelocity(){
+  var now=Date.now(),gap=now-_lastMsgTime;_lastMsgTime=now;
+  if(gap<3000)_msgVelocity=Math.min(_msgVelocity+1,5);
+  else _msgVelocity=Math.max(0,_msgVelocity-1);
+  clearTimeout(_velocityTimer);
+  _velocityTimer=setTimeout(function(){_msgVelocity=0;},8000);
+  return _msgVelocity;
+}
+function addMsgHeat(msgId){
+  setTimeout(function(){
+    var el=document.getElementById('m-'+msgId);if(!el)return;
+    var h=document.createElement('div');h.className='m-heat';
+    el.style.position='relative';el.insertBefore(h,el.firstChild);
+  },50);
+}
+function updateDockPulse(){
+  document.querySelectorAll('.dki').forEach(function(item){
+    var av=item.querySelector('.dk-av');if(!av)return;
+    if(av.querySelector('.dk-badge'))av.classList.add('unread-pulse');
+    else av.classList.remove('unread-pulse');
+  });
+}
+function setPresenceBreathing(fast){
+  var rings=document.querySelectorAll('.ring');
+  rings.forEach(function(r){r.style.animationDuration=fast?'1.5s':'4s';});
+}
+function onContactOffline(){
+  var d=document.getElementById('av-dot-inner');if(d)d.className='av-dot';
+  var pav=document.querySelector('.pav');
+  if(pav){pav.style.transition='filter 2s ease';pav.style.filter='saturate(0) brightness(0.6)';}
+}
+function onContactOnline(){
+  var pav=document.querySelector('.pav');
+  if(pav){pav.style.transition='filter 1s ease';pav.style.filter='saturate(1) brightness(1)';}
+}
+
+setWireTyping(false);
   S.sel=null;S.selType=null;
   document.getElementById('inp-outer').style.display='none';
   document.getElementById('pull-btn').classList.remove('vis');
@@ -915,7 +1077,12 @@ function onDirData(pid,data){
     if(!S.convos[pid])S.convos[pid]=[];
     S.convos[pid].push({f:'t',t:data.text,ts:ts(),id:data.id||uid(),reactions:{},replyTo:data.replyTo||null});
     var ct=getCt(pid);if(ct){ct.last=data.text;ct.unread=(S.sel===pid)?0:(ct.unread||0)+1;}
-    if(S.sel===pid){sendDir(pid,{type:'read'});renderMsgs();pulseAmb();}
+    if(S.sel===pid){
+      sendDir(pid,{type:'read'});renderMsgs();pulseAmb();
+      var v=trackMsgVelocity();pulseWire(v>2);
+      addMsgHeat(data.id||'',false);
+      updateDockPulse();
+    }
     renderDock();save();clearTyping(pid);notify(getName(pid),data.text,'msg-'+pid);
   }
   if(data.type==='typing'){if(S.sel===pid){showTyping(getName(pid));clearTimeout(S.typingTimers[pid]);S.typingTimers[pid]=setTimeout(function(){clearTyping(pid);},3000);}}
@@ -936,11 +1103,19 @@ function onTyping(ta){
 }
 function showTyping(name){
   var el=document.getElementById('typing-lbl');if(el){el.textContent=name+' is typing...';el.classList.add('on');}
-  // ambient breathes faster when typing
-  var o=document.getElementById('amb1');
-  if(o){o.style.animationDuration='2s';}
+  var o=document.getElementById('amb1');if(o){o.style.animationDuration='2s';}
+  setWireTyping(true);
+  setPresenceBreathing(true);
 }
-function clearTyping(pid){clearTimeout(S.typingTimers[pid]);if(S.sel===pid){var el=document.getElementById('typing-lbl');if(el){el.textContent='';el.classList.remove('on');}var o=document.getElementById('amb1');if(o)o.style.animationDuration='18s';}}
+function clearTyping(pid){
+  clearTimeout(S.typingTimers[pid]);
+  if(S.sel===pid){
+    var el=document.getElementById('typing-lbl');if(el){el.textContent='';el.classList.remove('on');}
+    var o=document.getElementById('amb1');if(o)o.style.animationDuration='18s';
+    setWireTyping(false);
+    setPresenceBreathing(false);
+  }
+}
 function clearRoomTyping(rid,name){if(S.roomTyping[rid])S.roomTyping[rid].delete(name);if(S.sel===rid)updRTL();}
 function updRTL(){var el=document.getElementById('typing-lbl');if(!el)return;var n=S.roomTyping[S.sel]?Array.from(S.roomTyping[S.sel]).filter(function(x){return x!==S.name;}):[]; el.textContent=n.length?(n.join(', ')+(n.length===1?' is':' are')+' typing...'):'';el.className='typing-lbl'+(n.length?' on':'');}
 
@@ -1064,7 +1239,14 @@ function dlFile(url,name){var a=document.createElement('a');a.href=url;a.downloa
 
 // ── contacts ───────────────────────────────────────────────────────
 function addContact(pid,name,status){S.contacts=S.contacts.filter(function(x,i,a){return a.findIndex(function(y){return y.id===x.id;})===i;});var c=getCt(pid);if(c){c.name=name;c.status=status;}else{S.contacts.unshift({id:pid,name:name,status:status,last:'Connected',unread:0,pinned:false});S.convos[pid]=S.convos[pid]||[];}renderDock();save();}
-function updStatus(pid,st){var c=getCt(pid);if(!c)return;c.status=st;renderDock();if(S.sel===pid)updPresence();}
+function updStatus(pid,st){
+  var c=getCt(pid);if(!c)return;c.status=st;renderDock();
+  if(S.sel===pid){
+    updPresence();
+    if(st==='off')onContactOffline();
+    else onContactOnline();
+  }
+}
 function getCt(pid){return S.contacts.find(function(x){return x.id===pid;});}
 function getName(pid){var c=getCt(pid);return c?c.name:pid.slice(0,10);}
 
@@ -1074,8 +1256,10 @@ function openConvo(pid){
   var bb=document.getElementById('back-btn');if(bb)bb.style.display='flex';
   // set contact color on document for CSS var
   var ac=avColor(getCt(pid)?getCt(pid).name:pid);
-  document.documentElement.style.setProperty('--contact-color',hexToRgba(ac,.3));
+  document.documentElement.style.setProperty('--contact-color',hexToRgba(ac,.4));
   setAmbientColor(ac);
+  setWireColor(ac);
+  var wire=document.getElementById('the-wire');if(wire){wire.style.opacity='0.15';}
   document.getElementById('inp-outer').style.display='block';document.getElementById('hdrawer').classList.remove('open');
   clearReply();updPresence();renderDock();renderMsgs();
   var ta=document.getElementById('msgta');if(ta&&c)ta.placeholder='Message '+c.name+'...';
@@ -1086,8 +1270,10 @@ function openRoom(rid){
   var r=S.rooms[rid];if(!r)return;S.sel=rid;S.selType='room';r.unread=0;
   var bb=document.getElementById('back-btn');if(bb)bb.style.display='flex';
   var ac=avColor(r.name);
-  document.documentElement.style.setProperty('--contact-color',hexToRgba(ac,.3));
+  document.documentElement.style.setProperty('--contact-color',hexToRgba(ac,.4));
   setAmbientColor(ac);
+  setWireColor(ac);
+  var wire=document.getElementById('the-wire');if(wire){wire.style.opacity='0.15';}
   document.getElementById('inp-outer').style.display='block';document.getElementById('hdrawer').classList.remove('open');
   clearReply();updPresence();renderDock();renderMsgs();
   var ta=document.getElementById('msgta');if(ta)ta.placeholder='Message #'+r.name+'...';
@@ -1183,6 +1369,7 @@ function renderMsgs(){
   var all=getMsgs(),area=document.getElementById('msgs');if(!area)return;
   var atBot=isAtBot(),recent=all.slice(-RECENT);
   area.innerHTML=buildMsgHtml(recent);
+  updateDockPulse();
   if(atBot)area.scrollTop=area.scrollHeight;
   document.getElementById('pull-btn').classList.toggle('vis',all.length>RECENT);
   var isRoom=S.selType==='room';
@@ -1236,6 +1423,7 @@ function sendMsg(){
     S.convos[S.sel].push({f:'m',t:t,ts:ts(),id:msgId,read:false,reactions:{},replyTo:replyTo});
     var c=getCt(S.sel);if(c)c.last=t;
     ta.value='';ta.style.height='auto';renderMsgs();renderDock();save();scrollBot();
+    var v=trackMsgVelocity();pulseWire(v>2);addMsgHeat(msgId,true);
     if(!sendDir(S.sel,{type:'msg',text:t,id:msgId,replyTo:replyTo}))toast('Will send when reconnected',2000);
   }
 }

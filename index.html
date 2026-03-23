@@ -235,17 +235,18 @@ button{font-family:var(--sans);cursor:pointer}
 .rpill.arriving{animation:badgeArc .4s cubic-bezier(.22,1,.36,1) forwards}
 
 /* ── RADIAL BURST PICKER ── */
-.rburst{position:fixed;z-index:500;pointer-events:none}
-.rburst.active{pointer-events:all}
-.rb-emoji{position:fixed;font-size:24px;cursor:pointer;opacity:0;line-height:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.7));-webkit-user-select:none;user-select:none;transform:translate(-50%,-50%) scale(0);will-change:transform,opacity}
-.rb-emoji.burst{transition:transform .32s cubic-bezier(.22,1,.36,1),opacity .2s ease;opacity:1}
-.rb-emoji.retract{transition:transform .18s ease-in,opacity .18s ease-in;transform:translate(-50%,-50%) scale(0) !important;opacity:0 !important}
-.rb-emoji.chosen{transition:transform .2s ease-in,opacity .15s ease-in;transform:translate(-50%,-50%) scale(1.6) !important;opacity:0 !important}
 /* ripple at tap point */
-.rb-ripple{position:fixed;z-index:499;width:40px;height:40px;border-radius:50%;border:1.5px solid rgba(139,92,246,.6);transform:translate(-50%,-50%) scale(0);pointer-events:none;animation:rippleOut .5s ease-out forwards}
-@keyframes rippleOut{to{transform:translate(-50%,-50%) scale(3);opacity:0}}
+}
+
+/* ── REACTION STRIP ── */
+.rstrip{position:fixed;display:flex;gap:1px;background:rgba(16,16,22,.88);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:30px;padding:5px 8px;z-index:200;box-shadow:0 4px 28px rgba(0,0,0,.6);animation:rsIn .14s cubic-bezier(.22,1,.36,1);pointer-events:all}
+@keyframes rsIn{from{opacity:0;transform:translateY(5px) scale(.93)}to{opacity:1;transform:translateY(0) scale(1)}}
+.rstrip-em{font-size:22px;padding:4px 5px;border-radius:16px;cursor:pointer;transition:transform .1s;line-height:1;-webkit-user-select:none;user-select:none}
+.rstrip-em:hover,.rstrip-em:active{transform:scale(1.28)}
+.m-wrap.pressing{box-shadow:0 0 0 2px rgba(139,92,246,.2),0 0 20px rgba(139,92,246,.08);border-radius:6px;transition:box-shadow .2s}
 
 /* reply ref */
+
 .rp-ref{display:flex;align-items:center;gap:5px;margin-bottom:4px;padding-left:10px;border-left:2px solid var(--s4);cursor:pointer;opacity:.5}
 .rp-ref:hover{opacity:.8}
 .rp-nm{font-size:9px;font-weight:600;color:var(--tx2);font-family:var(--mono)}
@@ -253,7 +254,7 @@ button{font-family:var(--sans);cursor:pointer}
 
 /* hover toolbar — minimal, near the message */
 .htb{position:absolute;right:-2px;top:-28px;background:rgba(20,20,26,.9);border:1px solid rgba(255,255,255,.08);border-radius:var(--r2);display:none;align-items:center;gap:1px;padding:2px 4px;box-shadow:0 4px 16px rgba(0,0,0,.5);z-index:5;backdrop-filter:blur(8px)}
-@media(hover:hover){.mrf:hover .htb,.mrc:hover .htb{display:flex}}
+@@media(hover:hover){.mrf:hover .htb,.mrc:hover .htb{display:flex}}
 .mrf.me .htb{right:auto;left:-2px}
 .htb-b{width:24px;height:24px;border-radius:6px;background:none;border:none;color:var(--tx3);font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .1s}
 .htb-b:hover{background:var(--s4);color:var(--tx2)}.htb-b.del:hover{color:var(--red)}
@@ -951,69 +952,40 @@ function sendReaction(msgId,emoji,isRoom){
     if(badge){badge.classList.add('landing');setTimeout(function(){badge.classList.remove('landing');},400);}
   },30);
 }
-function openPicker(msgId,isRoom,btn){
+function openPicker(msgId,isRoom,ev){
   if(PICKER_ID===msgId){closePicker();return;}
   closePicker();if(!msgId)return;PICKER_ID=msgId;
-  var mEl=document.getElementById('m-'+msgId);
-  var cx,cy;
-  if(mEl){var r=mEl.getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2;}
-  else if(btn){var r=btn.getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2;}
-  else{cx=window.innerWidth/2;cy=window.innerHeight/2;}
-  showBurst(msgId,isRoom,cx,cy);
-}
+  var mEl=document.getElementById('m-'+msgId);if(!mEl)return;
+  var wrap=mEl.querySelector('.m-wrap')||mEl;
+  var r=wrap.getBoundingClientRect();
+  var isMine=!!(mEl.classList.contains('me')||mEl.closest('.mrf.me')||mEl.closest('.mrc.me'));
 
-function showBurst(msgId,isRoom,cx,cy){
-  // ripple
-  var rip=document.createElement('div');rip.className='rb-ripple';
-  rip.style.left=cx+'px';rip.style.top=cy+'px';
-  document.body.appendChild(rip);
-  setTimeout(function(){rip.remove();},600);
-
-  // container
-  var burst=document.createElement('div');burst.id='rburst';burst.className='rburst active';
-  document.body.appendChild(burst);
-
-  var radius=72,els=[];
-  EMOJIS.forEach(function(em,i){
-    var angle=(i/EMOJIS.length)*2*Math.PI - Math.PI/2;
-    var tx=cx+radius*Math.cos(angle);
-    var ty=cy+radius*Math.sin(angle);
-    // clamp to viewport
-    tx=Math.max(20,Math.min(window.innerWidth-20,tx));
-    ty=Math.max(20,Math.min(window.innerHeight-20,ty));
-
-    var el=document.createElement('div');
-    el.className='rb-emoji';
-    el.textContent=em;
-    el.style.cssText='position:fixed;left:'+tx+'px;top:'+ty+'px;font-size:26px;cursor:pointer;opacity:0;transform:translate(-50%,-50%) scale(0);transition:transform .3s cubic-bezier(.22,1,.36,1) '+( i*28)+'ms, opacity .2s ease '+(i*28)+'ms;z-index:500;line-height:1;-webkit-user-select:none;user-select:none;filter:drop-shadow(0 3px 10px rgba(0,0,0,.8))';
-    burst.appendChild(el);
-
-    requestAnimationFrame(function(){requestAnimationFrame(function(){
-      el.style.opacity='1';
-      el.style.transform='translate(-50%,-50%) scale(1)';
-    });});
-
-    function pick(e){
-      e.preventDefault();e.stopPropagation();
-      els.forEach(function(x){
-        if(x!==el){x.style.opacity='0';x.style.transform='translate(-50%,-50%) scale(0)';}
-      });
-      el.style.transform='translate(-50%,-50%) scale(1.5)';
-      el.style.opacity='0';
-      setTimeout(function(){sendReaction(msgId,em,isRoom);closePicker();},180);
-    }
-    el.addEventListener('click',pick);
-    el.addEventListener('touchend',pick,{passive:false});
-    els.push(el);
+  var strip=document.createElement('div');
+  strip.id='rstrip';strip.className='rstrip';
+  // position above the message text, aligned to its edge
+  var top=Math.max(8,r.top-50);
+  if(isMine){
+    strip.style.cssText='position:fixed;top:'+top+'px;right:'+(window.innerWidth-r.right+2)+'px';
+  }else{
+    strip.style.cssText='position:fixed;top:'+top+'px;left:'+(r.left-2)+'px';
+  }
+  EMOJIS.forEach(function(em){
+    var s=document.createElement('span');s.className='rstrip-em';s.textContent=em;
+    s.addEventListener('click',function(e){e.stopPropagation();sendReaction(msgId,em,isRoom);closePicker();});
+    s.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();sendReaction(msgId,em,isRoom);closePicker();},{passive:false});
+    strip.appendChild(s);
   });
-
-  clearTimeout(_burstTimer);
-  _burstTimer=setTimeout(closePicker,2500);
-  setTimeout(function(){document.addEventListener('click',closePicker,{once:true,capture:true});},100);
+  document.body.appendChild(strip);
+  _burstTimer=setTimeout(closePicker,3000);
+  setTimeout(function(){document.addEventListener('click',closePicker,{once:true,capture:true});},80);
+}
+var _burstTimer=null;
+function closePicker(){
+  PICKER_ID=null;clearTimeout(_burstTimer);
+  var s=document.getElementById('rstrip');if(s)s.remove();
+  document.querySelectorAll('.rburst,.rb-ripple,.rpick').forEach(function(el){el.remove();});
 }
 
-var _burstTimer=null;
-function closePicker(){PICKER_ID=null;document.querySelectorAll('.rpick').forEach(function(el){el.remove();});}
 function reactHtml(reactions,mid,isRoom){
   if(!reactions||!Object.keys(reactions).length)return'';
   var iR=isRoom?'true':'false';
@@ -1315,25 +1287,21 @@ function setupKb(){
   document.addEventListener('pointerup',function(){clearTimeout(lpt);});
   document.addEventListener('pointermove',function(){clearTimeout(lpt);});
 
-  // Double-tap message to react — radial burst from center of message
-  var lastTap=0,lastEl=null;
-  document.addEventListener('touchend',function(e){
-    var mEl=e.target.closest('[id^="m-"]');if(!mEl)return;
-    // don't trigger on reaction badges themselves
-    if(e.target.closest('.rpill'))return;
-    var now=Date.now();
-    if(now-lastTap<320&&lastEl===mEl){
-      e.preventDefault();
-      var mid=mEl.id.slice(2);
-      var isRoom=S.selType==='room';
-      closePicker();
-      var r=mEl.getBoundingClientRect();
-      var cx=r.left+r.width/2,cy=r.top+r.height/2;
-      PICKER_ID=mid;
-      showBurst(mid,isRoom,cx,cy);
-    }
-    lastTap=now;lastEl=mEl;
-  },{passive:false});
+  // Long press to react
+  var _lpt=null;
+  document.addEventListener('touchstart',function(e){
+    var mEl=e.target.closest('[id^="m-"]');
+    if(!mEl||e.target.closest('.rpill,.rstrip,#rstrip'))return;
+    _lpt=setTimeout(function(){
+      if(!mEl.id)return;
+      var mid=mEl.id.slice(2),isRoom=S.selType==='room';
+      var w=mEl.querySelector('.m-wrap');
+      if(w){w.classList.add('pressing');setTimeout(function(){w.classList.remove('pressing');},500);}
+      openPicker(mid,isRoom,null);
+    },420);
+  },{passive:true});
+  document.addEventListener('touchend',function(){clearTimeout(_lpt);},{passive:true});
+  document.addEventListener('touchmove',function(){clearTimeout(_lpt);},{passive:true});
 }
 
 // Wake lock — keep screen on during active convo

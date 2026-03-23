@@ -844,10 +844,6 @@ function exitConvo(){
   var bb=document.getElementById('back-btn');if(bb)bb.style.display='none';
   showEmpty();
 }
-function showEmpty(){
-  var wire=document.getElementById('the-wire');if(wire)wire.style.opacity='0';
-  document.documentElement.style.removeProperty('--contact-color');
-  
 // ═══════════════════════════════════════════════
 // THE LIVING WIRE — conversation energy system
 // ═══════════════════════════════════════════════
@@ -904,7 +900,11 @@ function onContactOnline(){
   if(pav){pav.style.transition='filter 1s ease';pav.style.filter='saturate(1) brightness(1)';}
 }
 
-setWireTyping(false);
+
+function showEmpty(){
+  var wire=document.getElementById('the-wire');if(wire)wire.style.opacity='0';
+  document.documentElement.style.removeProperty('--contact-color');
+  setWireTyping(false);
   S.sel=null;S.selType=null;
   document.getElementById('inp-outer').style.display='none';
   document.getElementById('pull-btn').classList.remove('vis');
@@ -990,6 +990,7 @@ function submitName(){
 
 
 function setPresence(name,sub,dotColor,avName,isGroup,groupMembers){
+  console.log('[setPresence] name='+name+' existing id='+(document.getElementById('av-wrap')?document.getElementById('av-wrap').id:'null')+' class='+(document.getElementById('av-wrap')?document.getElementById('av-wrap').className:'null'));
   var existing=document.getElementById('av-wrap');
   if(existing&&existing.classList.contains('flint-mark')){
     var plain=document.createElement('div');plain.className='av-wrap';plain.id='av-wrap';
@@ -1341,6 +1342,7 @@ function getName(pid){var c=getCt(pid);return c?c.name:pid.slice(0,10);}
 
 // ── open conversations ─────────────────────────────────────────────
 function openConvo(pid){
+  console.log('[openConvo] called with pid='+pid+' S.sel was='+S.sel);
   S.sel=pid;S.selType='contact';var c=getCt(pid);if(c)c.unread=0;
   var bb=document.getElementById('back-btn');if(bb)bb.style.display='flex';
   var ac=avColor(c?c.name:pid);
@@ -1499,7 +1501,7 @@ function renderDock(){
   var add=dock.querySelector('.dk-add');dock.innerHTML='';
   S.contacts.forEach(function(c){
     var isSel=S.sel===c.id,ac=avColor(c.name),on=S.conns[c.id]&&S.conns[c.id].open;
-    var div=document.createElement('div');div.className='dki'+(isSel?' sel':'');div.title=c.name;div.onclick=function(){openConvo(c.id);};
+    var div=document.createElement('div');div.className='dki'+(isSel?' sel':'');div.title=c.name;div.onclick=function(){console.log('[dock tap] contact='+c.id+' name='+c.name);openConvo(c.id);};
     var av=document.createElement('div');av.className='dk-av'+(isSel?' sel':'');av.style.background=ac;av.textContent=(c.name||'?')[0].toUpperCase();
     if(on)av.style.boxShadow='0 0 0 2.5px var(--bg),0 0 0 4px '+ac+'55';
     if(c.unread){var b=document.createElement('div');b.className='dk-badge';b.textContent=c.unread>9?'9+':c.unread;av.appendChild(b);}

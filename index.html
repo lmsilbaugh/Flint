@@ -177,7 +177,7 @@ button{font-family:var(--sans);cursor:pointer}
 .day-sep span{font-family:var(--mono);font-size:9px;color:var(--tx3);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
 
 /* cluster spacing */
-.mg{margin-bottom:18px}
+.mg{margin-bottom:22px;position:relative}
 
 /* first message row */
 .mrf{display:flex;gap:10px;margin-bottom:3px;position:relative;align-items:flex-end}
@@ -207,8 +207,8 @@ button{font-family:var(--sans);cursor:pointer}
 .m-ed{font-family:var(--mono);font-size:9px;color:var(--tx3);margin-left:4px}
 
 /* continued rows — same sender, no avatar repeated */
-.mrc{padding-left:32px;margin-bottom:3px;position:relative}
-.mrc.me{padding-left:0;padding-right:32px;display:flex;justify-content:flex-end}
+.mrc{padding-left:32px;margin-bottom:6px;position:relative}
+.mrc.me{padding-left:0;padding-right:32px;display:flex;justify-content:flex-end;position:relative}
 .mrc-ts{position:absolute;left:0;top:3px;font-family:var(--mono);font-size:8px;color:var(--tx3);opacity:0;transition:opacity .1s;width:28px;text-align:right;pointer-events:none}
 .mrc:hover .mrc-ts{opacity:.6}
 .mrc.me .mrc-ts{left:auto;right:0;text-align:left}
@@ -217,19 +217,36 @@ button{font-family:var(--sans);cursor:pointer}
 .rcpt{font-family:var(--mono);font-size:8px;color:var(--tx3);margin-top:3px;text-align:right}
 .rcpt.read{color:rgba(34,197,94,.6)}
 
-/* ── REACTIONS — float below message, inline ── */
-.reacts{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;padding-left:12px}
-.mrf.me .reacts{justify-content:flex-end;padding-left:0;padding-right:12px}
-.rpill{display:inline-flex;align-items:center;gap:2px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:3px 8px;font-size:12px;cursor:pointer;transition:all .15s;user-select:none;backdrop-filter:blur(4px)}
-.rpill:hover{background:rgba(139,92,246,.12);border-color:rgba(139,92,246,.25)}
-.rpill.mine{background:rgba(139,92,246,.14);border-color:rgba(139,92,246,.3)}
-.rcnt{font-family:var(--mono);font-size:9px;color:var(--tx2)}
+/* ── REACTION BADGES — fused to message corner ── */
+.reacts{position:absolute;display:flex;gap:-4px;z-index:3;pointer-events:all}
+/* their messages: bottom-left corner */
+.mrf:not(.me) .reacts,.mrc:not(.me) .reacts{bottom:-10px;left:8px}
+/* my messages: bottom-right corner */
+.mrf.me .reacts,.mrc.me .reacts{bottom:-10px;right:8px}
+.rpill{display:inline-flex;align-items:center;gap:2px;background:rgba(14,14,20,.85);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:2px 6px 2px 4px;font-size:13px;cursor:pointer;transition:transform .2s,box-shadow .2s;user-select:none;backdrop-filter:blur(8px);box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.rpill:hover{transform:scale(1.12)}
+.rpill.mine{border-color:rgba(139,92,246,.5);box-shadow:0 0 8px rgba(139,92,246,.25)}
+.rcnt{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.5);margin-left:1px}
+@keyframes badgeLand{0%{transform:scale(0) rotate(-20deg);opacity:0}60%{transform:scale(1.25) rotate(5deg)}80%{transform:scale(.92)}100%{transform:scale(1) rotate(0deg);opacity:1}}
+@keyframes badgePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2);box-shadow:0 0 12px rgba(139,92,246,.5)}}
+@keyframes badgeArc{0%{opacity:0;transform:translate(-24px,8px) scale(.4)}60%{opacity:1;transform:translate(4px,-4px) scale(1.1)}100%{transform:translate(0,0) scale(1)}}
+.rpill.landing{animation:badgeLand .35s cubic-bezier(.22,1,.36,1) forwards}
+.rpill.pulsing{animation:badgePulse .4s ease-in-out}
+.rpill.arriving{animation:badgeArc .4s cubic-bezier(.22,1,.36,1) forwards}
 
-/* ── REACTION PICKER — rises from the message ── */
-.rpick{position:fixed;z-index:400;background:rgba(24,24,32,.92);border:1px solid rgba(255,255,255,.1);border-radius:var(--r3);padding:8px 12px;display:flex;gap:6px;box-shadow:0 8px 32px rgba(0,0,0,.7);animation:rpickIn .18s cubic-bezier(.22,1,.36,1);backdrop-filter:blur(16px)}
-@keyframes rpickIn{from{opacity:0;transform:scale(.8) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.remoji{font-size:20px;padding:4px;border-radius:8px;transition:transform .12s;line-height:1;cursor:pointer}
-.remoji:hover{transform:scale(1.35)}
+/* ── RADIAL BURST PICKER ── */
+.rburst{position:fixed;z-index:500;pointer-events:none}
+.rburst.active{pointer-events:all}
+.rb-emoji{position:absolute;font-size:22px;cursor:pointer;transform:translate(-50%,-50%) scale(0);opacity:0;transition:none;line-height:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.6));-webkit-user-select:none;user-select:none}
+.rb-emoji.burst{animation:rbOut .3s cubic-bezier(.22,1,.36,1) forwards}
+.rb-emoji.retract{animation:rbIn .2s ease-in forwards}
+.rb-emoji.chosen{animation:rbChosen .25s ease-in forwards}
+@keyframes rbOut{to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+@keyframes rbIn{to{transform:translate(-50%,-50%) scale(0);opacity:0}}
+@keyframes rbChosen{0%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.5)}100%{transform:translate(-50%,-50%) scale(0);opacity:0}}
+/* ripple at tap point */
+.rb-ripple{position:fixed;z-index:499;width:40px;height:40px;border-radius:50%;border:1.5px solid rgba(139,92,246,.6);transform:translate(-50%,-50%) scale(0);pointer-events:none;animation:rippleOut .5s ease-out forwards}
+@keyframes rippleOut{to{transform:translate(-50%,-50%) scale(3);opacity:0}}
 
 /* reply ref */
 .rp-ref{display:flex;align-items:center;gap:5px;margin-bottom:4px;padding-left:10px;border-left:2px solid var(--s4);cursor:pointer;opacity:.5}
@@ -902,7 +919,7 @@ function onDirData(pid,data){
   }
   if(data.type==='typing'){if(S.sel===pid){showTyping(getName(pid));clearTimeout(S.typingTimers[pid]);S.typingTimers[pid]=setTimeout(function(){clearTyping(pid);},3000);}}
   if(data.type==='read'){(S.convos[pid]||[]).forEach(function(m){m.read=true;});if(S.sel===pid)renderMsgs();}
-  if(data.type==='reaction'){doReaction(S.convos[pid]||[],data.msgId,data.emoji,data.from);if(S.sel===pid)renderMsgs();save();}
+  if(data.type==='reaction'){doReaction(S.convos[pid]||[],data.msgId,data.emoji,data.from);if(S.sel===pid){renderMsgs();setTimeout(function(){var mEl=document.getElementById('m-'+data.msgId);if(mEl){var badge=mEl.querySelector('.rpill[data-emoji="'+data.emoji+'"]');if(badge){badge.classList.add('arriving');setTimeout(function(){badge.classList.remove('arriving');},450);}}},30);}save();}
   if(data.type==='edit'){var msgs=S.convos[pid]||[];var m=msgs.find(function(x){return x.id===data.msgId;});if(m){m.t=data.text;m.edited=true;}if(S.sel===pid)renderMsgs();save();}
   if(data.type==='delete'){S.convos[pid]=(S.convos[pid]||[]).filter(function(m){return m.id!==data.msgId;});if(S.sel===pid)renderMsgs();save();}
   if(data.type==='vm-start'||data.type==='vm-chunk'||data.type==='vm-end')onVmData(pid,data,false,null);
@@ -928,7 +945,14 @@ function sendReaction(msgId,emoji,isRoom){
   doReaction(msgs,msgId,emoji,S.peerId);
   var data={type:isRoom?'room-reaction':'reaction',msgId:msgId,emoji:emoji,from:S.peerId};
   if(isRoom){data.roomId=S.sel;broadcastRoom(S.sel,data);}else sendDir(S.sel,data);
-  renderMsgs();save();closePicker();
+  renderMsgs();save();
+  // animate the landing badge
+  setTimeout(function(){
+    var mEl=document.getElementById('m-'+msgId);
+    if(!mEl)return;
+    var badge=mEl.querySelector('.rpill[data-emoji="'+emoji+'"]');
+    if(badge){badge.classList.add('landing');setTimeout(function(){badge.classList.remove('landing');},400);}
+  },30);
 }
 function openPicker(msgId,isRoom,btn){
   if(PICKER_ID===msgId){closePicker();return;}closePicker();if(!msgId)return;PICKER_ID=msgId;
@@ -1239,28 +1263,22 @@ function setupKb(){
   document.addEventListener('pointerup',function(){clearTimeout(lpt);});
   document.addEventListener('pointermove',function(){clearTimeout(lpt);});
 
-  // Double-tap message to react
+  // Double-tap message to react — radial burst from center of message
   var lastTap=0,lastEl=null;
   document.addEventListener('touchend',function(e){
     var mEl=e.target.closest('[id^="m-"]');if(!mEl)return;
+    // don't trigger on reaction badges themselves
+    if(e.target.closest('.rpill'))return;
     var now=Date.now();
-    if(now-lastTap<300&&lastEl===mEl){
+    if(now-lastTap<320&&lastEl===mEl){
       e.preventDefault();
       var mid=mEl.id.slice(2);
       var isRoom=S.selType==='room';
-      // show picker centered above the element
-      closePicker();PICKER_ID=mid;
+      closePicker();
       var r=mEl.getBoundingClientRect();
-      var p=document.createElement('div');p.className='rpick';
-      p.style.top=Math.max(8,r.top-58)+'px';
-      p.style.left=Math.max(8,Math.min(r.left+(r.width/2)-100,window.innerWidth-220))+'px';
-      EMOJIS.forEach(function(em){
-        var s=document.createElement('span');s.className='remoji';s.textContent=em;
-        s.onclick=function(ev){ev.stopPropagation();sendReaction(mid,em,isRoom);};
-        p.appendChild(s);
-      });
-      document.body.appendChild(p);
-      setTimeout(function(){document.addEventListener('click',closePicker,{once:true,capture:true});},0);
+      var cx=r.left+r.width/2,cy=r.top+r.height/2;
+      PICKER_ID=mid;
+      showBurst(mid,isRoom,cx,cy);
     }
     lastTap=now;lastEl=mEl;
   },{passive:false});

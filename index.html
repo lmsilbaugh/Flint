@@ -261,7 +261,7 @@ button{font-family:var(--sans);cursor:pointer}
 .pull-row{flex-shrink:0;text-align:center;padding:2px 0}
 .pull-btn{background:none;border:none;color:var(--tx3);font-family:var(--mono);font-size:9px;letter-spacing:.08em;align-items:center;gap:4px;margin:0 auto;padding:3px 10px;border-radius:20px;transition:all .15s;text-transform:uppercase;display:none}
 .pull-btn:hover{background:var(--s2);color:var(--tx2)}.pull-btn.vis{display:flex}
-.msgs{flex:1;overflow-y:auto;padding:8px 18px 6px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;z-index:1}
+.msgs{flex:1;overflow-y:auto;padding:8px 20px 12px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;z-index:1;min-height:0}
 .msgs::-webkit-scrollbar{width:0}
 .empty-v{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 24px 32px;text-align:center;flex:1;position:relative;z-index:1}
 .empty-cta{background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.25);color:rgba(167,139,250,.9);border-radius:20px;padding:10px 24px;font-size:12px;font-weight:500;letter-spacing:.04em;transition:all .2s}
@@ -269,95 +269,85 @@ button{font-family:var(--sans);cursor:pointer}
 .j2b{position:absolute;bottom:6px;right:12px;width:28px;height:28px;border-radius:50%;background:var(--s3);border:1px solid var(--bd2);color:var(--tx2);font-size:12px;display:none;align-items:center;justify-content:center;z-index:6;box-shadow:0 2px 8px rgba(0,0,0,.5)}
 .j2b.on{display:flex}
 
-/* ── THE LIVING WIRE — message space ── */
+/* ── MESSAGE SPACE ── */
+.msgs-outer{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;overflow:hidden}
 
-/* Depth field: messages anchor to bottom, fade as they recede */
-.msgs{flex:1;overflow-y:auto;padding:0 0 8px 0;display:flex;flex-direction:column;justify-content:flex-end;position:relative;z-index:1}
-.msgs::-webkit-scrollbar{width:0}
-
-/* Contact energy field — colors the ambient to their hue */
-.msgs-outer{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;overflow:hidden;transition:background .8s ease}
-
-/* Day separator */
-.day-sep{display:flex;align-items:center;gap:8px;padding:8px 20px;margin:4px 0;opacity:.4}
+.day-sep{display:flex;align-items:center;gap:10px;padding:6px 24px;margin:8px 0;opacity:.35}
 .day-sep::before,.day-sep::after{content:"";flex:1;height:1px;background:var(--bd)}
 .day-sep span{font-family:var(--mono);font-size:9px;color:var(--tx3);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
 
-/* Message cluster */
-.mg{position:relative;padding:0 20px;margin-bottom:2px}
-.mg.theirs{padding-right:20%;animation:msgInLeft .3s cubic-bezier(.22,1,.36,1)}
-.mg.mine{padding-left:20%;animation:msgInRight .3s cubic-bezier(.22,1,.36,1)}
+/* Message clusters — theirs left, mine right */
+.mg{position:relative;padding:2px 24px;margin-bottom:1px}
+.mg.theirs{padding-right:25%}
+.mg.mine{padding-left:25%;text-align:right}
+@keyframes msgInLeft{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+@keyframes msgInRight{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
+.mg.theirs{animation:msgInLeft .25s cubic-bezier(.22,1,.36,1)}
+.mg.mine{animation:msgInRight .25s cubic-bezier(.22,1,.36,1)}
 
-/* Arrival animations — theirs from left, mine from right */
-@keyframes msgInLeft{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
-@keyframes msgInRight{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+/* Depth — older messages fade back */
+.mg.depth-1{opacity:.82}.mg.depth-2{opacity:.6}.mg.depth-3{opacity:.38}
 
-/* Depth fade — older messages slightly recede */
-.mg.depth-1{opacity:.85}
-.mg.depth-2{opacity:.65}
-.mg.depth-3{opacity:.45}
+/* Sender name */
+.m-who{font-size:9px;font-family:var(--mono);color:var(--tx3);letter-spacing:.08em;margin-bottom:3px;opacity:.6}
 
-/* Sender name — theirs only */
-.m-who{font-size:9px;font-family:var(--mono);color:var(--tx3);letter-spacing:.08em;margin-bottom:4px;padding-left:2px;opacity:.7}
+/* Message body */
+.m-body{position:relative;display:inline-block;max-width:100%;text-align:left}
+.mg.mine .m-body{text-align:right}
 
-/* The message text itself */
-.m-body{position:relative}
-/* Theirs: left-anchored, colored left trace */
-.mg.theirs .m-body{border-left:2px solid var(--contact-color,rgba(139,92,246,.3));padding-left:10px}
-/* Mine: right-anchored, right trace */  
-.mg.mine .m-body{border-right:2px solid rgba(139,92,246,.25);padding-right:10px;text-align:right}
-
-.m-txt{font-size:15px;line-height:1.65;word-break:break-word;display:inline}
-.mg.theirs .m-txt{color:rgba(210,210,228,.85)}
-.mg.mine .m-txt{color:rgba(245,245,252,.95)}
+/* The text — theirs has contact color left trace, mine has violet right trace */
+.m-txt{font-size:15px;line-height:1.65;word-break:break-word;display:block;padding-left:10px;border-left:2px solid var(--contact-color,rgba(139,92,246,.3));color:rgba(208,208,226,.88)}
+.mg.mine .m-txt{border-left:none;border-right:2px solid rgba(139,92,246,.3);padding-left:0;padding-right:10px;color:rgba(242,242,250,.96)}
 .m-txt a{color:var(--blu);text-decoration:none}
-.m-ed{font-family:var(--mono);font-size:9px;color:var(--tx3);margin-left:4px;opacity:.5}
+.m-ed{font-family:var(--mono);font-size:9px;color:var(--tx3);margin-left:4px;opacity:.4}
 
-/* Continued message — tighter, no name */
-.mc{position:relative;padding:0 20px;margin-bottom:2px}
-.mc.theirs{padding-right:20%}
-.mc.mine{padding-left:20%;text-align:right}
-.mc.theirs .m-body{border-left:2px solid var(--contact-color,rgba(139,92,246,.15));padding-left:10px}
-.mc.mine .m-body{border-right:2px solid rgba(139,92,246,.12);padding-right:10px}
+/* Continued rows */
+.mc{position:relative;padding:1px 24px;margin-bottom:1px}
+.mc.theirs{padding-right:25%}
+.mc.mine{padding-left:25%;text-align:right}
+.mc.theirs .m-txt{border-left-color:var(--contact-color,rgba(139,92,246,.15))}
+.mc.mine .m-txt{border-right-color:rgba(139,92,246,.15)}
+.mc.depth-1{opacity:.82}.mc.depth-2{opacity:.6}.mc.depth-3{opacity:.38}
 
-/* Timestamp — whispered, visible on hover */
-.m-ts{font-family:var(--mono);font-size:8px;color:var(--tx3);opacity:0;transition:opacity .15s;margin-top:2px;letter-spacing:.04em}
-.mg:hover .m-ts,.mc:hover .m-ts{opacity:.5}
+/* Timestamp — appears on hover */
+.m-ts{font-family:var(--mono);font-size:8px;color:var(--tx3);opacity:0;transition:opacity .15s;margin-top:2px;display:block}
+.mg:hover .m-ts,.mc:hover .m-ts{opacity:.45}
 .mg.mine .m-ts,.mc.mine .m-ts{text-align:right}
 
 /* Read receipt */
-.rcpt{font-family:var(--mono);font-size:8px;color:var(--tx3);opacity:.4;margin-top:1px;text-align:right}
-.rcpt.read{color:rgba(34,197,94,.6);opacity:1}
+.rcpt{font-family:var(--mono);font-size:8px;color:var(--tx3);opacity:.35;display:inline}
+.rcpt.read{color:rgba(34,197,94,.55);opacity:1}
 
 /* Reply ref */
-.rp-ref{display:flex;align-items:center;gap:5px;margin-bottom:5px;padding-left:8px;border-left:2px solid var(--s4);cursor:pointer;opacity:.4;transition:opacity .15s}
+.rp-ref{display:inline-flex;align-items:center;gap:5px;margin-bottom:4px;padding-left:8px;border-left:2px solid rgba(255,255,255,.08);cursor:pointer;opacity:.4;transition:opacity .15s}
 .rp-ref:hover{opacity:.7}
 .rp-nm{font-size:9px;font-weight:600;color:var(--tx2);font-family:var(--mono)}
-.rp-txt{font-size:11px;color:var(--tx3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
+.rp-txt{font-size:11px;color:var(--tx3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
 
-/* Hover toolbar — desktop only */
-.htb{position:absolute;top:-26px;background:rgba(18,18,26,.9);border-radius:var(--r2);display:none;align-items:center;gap:1px;padding:2px 4px;box-shadow:0 4px 16px rgba(0,0,0,.5);z-index:5;backdrop-filter:blur(8px)}
-.mg.theirs:hover .htb,.mc.theirs:hover .htb{display:flex;left:22px}
-.mg.mine:hover .htb,.mc.mine:hover .htb{display:flex;right:22px}
+/* Toolbar — desktop hover only */
+.htb{position:absolute;top:-28px;background:rgba(16,16,22,.92);border-radius:var(--r2);display:none;align-items:center;gap:1px;padding:2px 4px;box-shadow:0 4px 20px rgba(0,0,0,.6);z-index:5;backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.06)}
 @media(hover:hover){.mg:hover .htb,.mc:hover .htb{display:flex}}
-@media not all and (hover:hover){.htb{display:none !important}}
+.mg.mine .htb,.mc.mine .htb{right:24px;left:auto}
+.mg.theirs .htb,.mc.theirs .htb{left:24px}
 .htb-b{width:24px;height:24px;border-radius:6px;background:none;border:none;color:var(--tx3);font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .1s}
-.htb-b:hover{background:var(--s4);color:var(--tx2)}
+.htb-b:hover{background:rgba(255,255,255,.06);color:var(--tx2)}
 .htb-b.del:hover{color:var(--red)}
 
-/* Edit box */
-.edit-box{margin-top:2px}
+/* Heat glow on new messages */
+.mg.heat,.mc.heat{position:relative}
+.mg.heat::after,.mc.heat::after{content:"";position:absolute;inset:-2px 0;background:radial-gradient(ellipse at 30% 50%,var(--contact-color,rgba(139,92,246,.06)) 0%,transparent 70%);pointer-events:none;animation:heatFade 20s ease-out forwards;border-radius:4px}
+.mg.mine.heat::after,.mc.mine.heat::after{background:radial-gradient(ellipse at 70% 50%,rgba(139,92,246,.06) 0%,transparent 70%)}
+@keyframes heatFade{0%{opacity:1}100%{opacity:0}}
+
+/* Edit */
+.edit-box{margin-top:3px}
 .edit-ta{width:100%;background:var(--s2);border:1px solid var(--bd2);border-radius:var(--r);padding:6px 10px;color:var(--tx);font-family:var(--sans);font-size:14px;resize:none;outline:none;min-height:32px;max-height:100px;line-height:1.5}
 .edit-ta:focus{border-color:var(--bd3)}
 .edit-hints{font-family:var(--mono);font-size:9px;color:var(--tx3);margin-top:2px}
 .edit-hints span{color:var(--tx2);cursor:pointer;text-decoration:underline}
 
-/* New message wave — pulse through ambient on arrival */
-@keyframes msgWave{0%{opacity:0}100%{opacity:1}}
-.mg.new-msg,.mc.new-msg{animation:none}
-
-/* Input auto-hide */
-.inp-outer{padding:5px 12px 12px;flex-shrink:0;position:relative;transition:opacity .25s,transform .25s}
+/* Input */
+.inp-outer{padding:6px 14px 14px;flex-shrink:0;position:relative;transition:opacity .25s,transform .25s}
 .inp-outer.hidden{opacity:0;transform:translateY(8px);pointer-events:none}
 
 /* ── file/vm bubbles ── */
@@ -875,8 +865,7 @@ function trackMsgVelocity(){
 function addMsgHeat(msgId){
   setTimeout(function(){
     var el=document.getElementById('m-'+msgId);if(!el)return;
-    var h=document.createElement('div');h.className='m-heat';
-    el.style.position='relative';el.insertBefore(h,el.firstChild);
+    el.classList.add('heat');
   },50);
 }
 function updateDockPulse(){
@@ -990,7 +979,6 @@ function submitName(){
 
 
 function setPresence(name,sub,dotColor,avName,isGroup,groupMembers){
-  console.log('[setPresence] name='+name+' existing id='+(document.getElementById('av-wrap')?document.getElementById('av-wrap').id:'null')+' class='+(document.getElementById('av-wrap')?document.getElementById('av-wrap').className:'null'));
   var existing=document.getElementById('av-wrap');
   if(existing&&existing.classList.contains('flint-mark')){
     var plain=document.createElement('div');plain.className='av-wrap';plain.id='av-wrap';
@@ -1342,7 +1330,6 @@ function getName(pid){var c=getCt(pid);return c?c.name:pid.slice(0,10);}
 
 // ── open conversations ─────────────────────────────────────────────
 function openConvo(pid){
-  console.log('[openConvo] called with pid='+pid+' S.sel was='+S.sel);
   S.sel=pid;S.selType='contact';var c=getCt(pid);if(c)c.unread=0;
   var bb=document.getElementById('back-btn');if(bb)bb.style.display='flex';
   var ac=avColor(c?c.name:pid);
@@ -1501,7 +1488,7 @@ function renderDock(){
   var add=dock.querySelector('.dk-add');dock.innerHTML='';
   S.contacts.forEach(function(c){
     var isSel=S.sel===c.id,ac=avColor(c.name),on=S.conns[c.id]&&S.conns[c.id].open;
-    var div=document.createElement('div');div.className='dki'+(isSel?' sel':'');div.title=c.name;div.onclick=function(){console.log('[dock tap] contact='+c.id+' name='+c.name);openConvo(c.id);};
+    var div=document.createElement('div');div.className='dki'+(isSel?' sel':'');div.title=c.name;div.onclick=function(){openConvo(c.id);};
     var av=document.createElement('div');av.className='dk-av'+(isSel?' sel':'');av.style.background=ac;av.textContent=(c.name||'?')[0].toUpperCase();
     if(on)av.style.boxShadow='0 0 0 2.5px var(--bg),0 0 0 4px '+ac+'55';
     if(c.unread){var b=document.createElement('div');b.className='dk-badge';b.textContent=c.unread>9?'9+':c.unread;av.appendChild(b);}
@@ -1585,18 +1572,19 @@ function setupDrop(){
 
 // ── keyboard + swipe ───────────────────────────────────────────────
 function setupInputAutoHide(){
+  // Only hide input on touch devices - PC always shows it
+  if(!('ontouchstart' in window))return;
   var msgs=document.getElementById('msgs');
   var inp=document.getElementById('inp-outer');
   if(!msgs||!inp)return;
-  var lastY=0,hiding=false;
+  var lastY=0;
   msgs.addEventListener('scroll',function(){
     var y=msgs.scrollTop;
     var atBot=msgs.scrollHeight-y-msgs.clientHeight<80;
     if(atBot){inp.classList.remove('hidden');}
-    else if(y<lastY-30){inp.classList.add('hidden');}
+    else if(y<lastY-40){inp.classList.add('hidden');}
     lastY=y;
   },{passive:true});
-  // touch bottom half to show input
   msgs.addEventListener('touchstart',function(e){
     var y=e.touches[0].clientY;
     if(y>window.innerHeight*0.65)inp.classList.remove('hidden');

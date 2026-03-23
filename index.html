@@ -1343,30 +1343,51 @@ function getName(pid){var c=getCt(pid);return c?c.name:pid.slice(0,10);}
 function openConvo(pid){
   S.sel=pid;S.selType='contact';var c=getCt(pid);if(c)c.unread=0;
   var bb=document.getElementById('back-btn');if(bb)bb.style.display='flex';
-  // set contact color on document for CSS var
-  var ac=avColor(getCt(pid)?getCt(pid).name:pid);
+  var ac=avColor(c?c.name:pid);
   document.documentElement.style.setProperty('--contact-color',hexToRgba(ac,.4));
-  setAmbientColor(ac);
-  setWireColor(ac);
-  var wire=document.getElementById('the-wire');if(wire){wire.style.opacity='0.15';}
-  document.getElementById('inp-outer').style.display='block';document.getElementById('hdrawer').classList.remove('open');
+  setAmbientColor(ac);setWireColor(ac);
+  var wire=document.getElementById('the-wire');if(wire)wire.style.opacity='0.15';
+
+  // Force-reset presence zone to plain av-wrap before updPresence
+  var aw=document.getElementById('av-wrap');
+  if(aw&&aw.classList.contains('flint-mark')){
+    var plain=document.createElement('div');plain.className='av-wrap';plain.id='av-wrap';
+    aw.replaceWith(plain);
+  }
+  // Restore p-meta and p-name
+  var pm=document.getElementById('p-meta');if(pm)pm.style.display='flex';
+  var pn=document.getElementById('p-name');if(pn)pn.textContent='';
+
+  document.getElementById('inp-outer').style.display='block';
+  document.getElementById('hdrawer').classList.remove('open');
   clearReply();updPresence();renderDock();renderMsgs();
   var ta=document.getElementById('msgta');if(ta&&c)ta.placeholder='Message '+c.name+'...';
   if(S.conns[pid]&&S.conns[pid].open)sendDir(pid,{type:'read'});
-  setTimeout(scrollBot,60);setTimeout(function(){document.getElementById('msgta').focus();},90);
+  setTimeout(scrollBot,60);
+  setTimeout(function(){var ta=document.getElementById('msgta');if(ta)ta.focus();},90);
 }
 function openRoom(rid){
   var r=S.rooms[rid];if(!r)return;S.sel=rid;S.selType='room';r.unread=0;
   var bb=document.getElementById('back-btn');if(bb)bb.style.display='flex';
   var ac=avColor(r.name);
   document.documentElement.style.setProperty('--contact-color',hexToRgba(ac,.4));
-  setAmbientColor(ac);
-  setWireColor(ac);
-  var wire=document.getElementById('the-wire');if(wire){wire.style.opacity='0.15';}
-  document.getElementById('inp-outer').style.display='block';document.getElementById('hdrawer').classList.remove('open');
+  setAmbientColor(ac);setWireColor(ac);
+  var wire=document.getElementById('the-wire');if(wire)wire.style.opacity='0.15';
+
+  var aw=document.getElementById('av-wrap');
+  if(aw&&aw.classList.contains('flint-mark')){
+    var plain=document.createElement('div');plain.className='av-wrap';plain.id='av-wrap';
+    aw.replaceWith(plain);
+  }
+  var pm=document.getElementById('p-meta');if(pm)pm.style.display='flex';
+  var pn=document.getElementById('p-name');if(pn)pn.textContent='';
+
+  document.getElementById('inp-outer').style.display='block';
+  document.getElementById('hdrawer').classList.remove('open');
   clearReply();updPresence();renderDock();renderMsgs();
   var ta=document.getElementById('msgta');if(ta)ta.placeholder='Message #'+r.name+'...';
-  setTimeout(scrollBot,60);setTimeout(function(){document.getElementById('msgta').focus();},90);
+  setTimeout(scrollBot,60);
+  setTimeout(function(){var ta=document.getElementById('msgta');if(ta)ta.focus();},90);
 }
 function closeChat(){
   if(!S.sel||S.selType!=='contact')return;var pid=S.sel;
